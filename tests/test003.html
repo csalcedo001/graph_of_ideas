@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Idea graph</title>
+	</head>
+
+	<body>
+		<h1>Ideas...</h1>
+		<canvas id=board width=600px height=400px style="border:1px solid #000000;">
+	</body>
+
+	<script>
+		var canvas = document.getElementById("board");
+		var ctx = canvas.getContext("2d");
+
+		// Circles indexed by id
+		var circleMap = {};
+
+		// CircleIDCount
+		var circleCount = 0;
+
+		// Classes
+
+		const Circle = class {
+			constructor(x, y, r) {
+				this.id = circleMap[circleCount] = circleCount;
+				circleCount++;
+
+				this.move(x, y);
+				this.r = r;
+				this.color = "#FFFFFF";
+
+				this.text = "";
+			}
+
+			draw() {
+				// Draw the circle
+				ctx.fillStyle = this.color;
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+				ctx.stroke();
+				ctx.fill();
+
+				// Print text inside circles
+				ctx.fillStyle = "black";
+				ctx.font = "10px Arial";
+				ctx.fillText("Example text", this.x - this.r, this.y);
+			}
+
+			move(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+
+			contains(x, y) {
+				return Math.sqrt(
+					(x - this.x) * (x - this.x) +
+					(y - this.y) * (y - this.y)
+				) <= this.r;
+			}
+
+			paint(color) {
+				this.color = color;
+			}
+
+			say(text) {
+				this.text = text;
+			}
+		}
+
+		var selection = {
+			index: -1
+		}
+		
+		// Variables / Data
+
+		var circles = [];
+		var hold = null;
+		var mouseX, mouseY;
+		var index = -1;
+
+		for (var i = 0; i < 10; i++) {
+			circles.push(new Circle(10 * i, 5 * i, 40));
+		}
+
+		canvas.addEventListener("mousemove", updateMousePosition, false);
+		canvas.addEventListener("mousedown", mousePressFunction, false);
+		canvas.addEventListener("mouseup", mouseReleaseFunction, false);
+		canvas.addEventListener("mouseleave", mouseReleaseFunction, false);
+		canvas.addEventListener("dblclick", function (evt) {
+			if (index == -1) {
+				circles.push(new Circle(mouseX, mouseY, 20));
+			} else {
+				circles[index].paint("blue");
+			}
+		}, false);
+
+		// Functions
+
+		function updateMousePosition(evt) {
+			var rect = canvas.getBoundingClientRect();
+
+			mouseX = evt.clientX - rect.left;
+			mouseY = evt.clientY - rect.top;
+		}
+
+		function mousePressFunction(evt) {
+			if (!evt.metaKey) {
+				index = -1;
+
+				for (var i = circles.length - 1; i >= 0; i--) {
+					if (circles[i].contains(mouseX, mouseY)) {
+						circles[i].paint("red");
+						index = i;
+						break;
+					}
+				}
+
+				if (index != -1) {
+					var xdiff = circles[index].x - mouseX;
+					var ydiff = circles[index].y - mouseY;
+
+					hold = setInterval(function(evt) {
+						circles[index].move(mouseX + xdiff, mouseY + ydiff);
+					}, 5);
+				}
+			}
+		}
+
+		function mouseReleaseFunction(evt) {
+			if (index != -1) {
+				clearInterval(hold);
+				circles[index].paint("white");
+			}
+		}
+
+		function draw() {
+			ctx.clearRect(0, 0, 900, 900);
+
+			for (var i = 0; i < circles.length; i++) {
+				circles[i].draw();
+			}
+		}
+
+		setInterval(draw, 10);
+	</script>
+</html>
