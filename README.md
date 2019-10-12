@@ -1,1 +1,1 @@
-# idea_graph
+# Graph of Ideas
