@@ -6,12 +6,15 @@
 
 	<body>
 		<h1>Ideas...</h1>
-		<canvas id=board width=600px height=400px style="border:1px solid #000000;">
+		<canvas id=board style="width=100%; height=100%; margin=0; border:1px solid #000000;">
 	</body>
 
 	<script>
 		var canvas = document.getElementById("board");
 		var ctx = canvas.getContext("2d");
+
+		ctx.canvas.width = window.innerWidth;
+		ctx.canvas.height = window.innerHeight;
 
 		// Circles indexed by id
 		var circleMap = {};
@@ -135,7 +138,7 @@
 		}
 
 		function draw() {
-			ctx.clearRect(0, 0, 900, 900);
+			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
 			for (var i = 0; i < circles.length; i++) {
 				circles[i].draw();
