@@ -19,18 +19,31 @@
 		// Circle id count
 		var objectCount = 0;
 
+		// Objects indexed by id
+		var objectMap = {};
+
 		// Classes
 
 		const Circle = class {
 			constructor(x, y, r) {
+				// Object unique ID
 				this.id = objectCount;
 				objectCount++;
+
+				// Add object to global object mapping
+				objectMap[this.id] = this;
 				
+				// Object positioning and color
 				this.move(x, y);
 				this.r = r;
 				this.color = "#FFFFFF";
 
+				// Text to be displayed in object
 				this.text = "";
+
+				// Array of indices
+				this.outNeighbors = {};
+				this.selfNeighbor = false; // For multigraphs, represent by number
 			}
 
 			draw() {
@@ -44,7 +57,7 @@
 				// Print text inside circle
 				ctx.fillStyle = "black";
 				ctx.font = "10px Arial";
-				ctx.fillText(this.text, this.x - this.r, this.y);
+				ctx.fillText(this.text, this.x, this.y);
 			}
 
 			move(x, y) {
@@ -52,6 +65,7 @@
 				this.y = y;
 			}
 
+			// Test whether the object contains point (x, y)
 			contains(x, y) {
 				return Math.sqrt(
 					(x - this.x) * (x - this.x) +
@@ -59,44 +73,53 @@
 				) <= this.r;
 			}
 
+			// Update color
 			paint(color) {
 				this.color = color;
 			}
 
+			// Update text
 			say(text) {
 				this.text = text;
 			}
+
+			connect(id) {
+				if (id == this.id) {
+					this.selfNeighbor = true;
+				} else {
+					this.outNeighbors[id] = objectMap[id];
+				}
+			}
 		}
 
-		// Objects indexed by id
-		var objectMap = {};
+		// Initial circle
+		var originObject = new Circle(400, 400, 50);
+		
+		delete objectMap[objectCount - 1];
+		originObject.outNeighbors = objectMap;
+
+		var currentObject = originObject;
+		var selectedObjectID = originObject.id;
 
 		for (var i = 0; i < 10; i++) {
 			var newObject = new Circle(15 * i, 10 * i, 40);
-			newObject.say("Example text");
-
-			objectMap[newObject.id] = newObject;
+			newObject.say(newObject.id.toString());
 		}
+
+
 		
+		var console = new Circle(250, 250, 40);
+
 		function draw() {
 			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 			
-			for (key in objectMap) {
+			console.paint("red");
+			console.say(selectedObjectID.toString());
+			console.draw();
+
+			for (key in currentObject.outNeighbors) {
 				objectMap[key].draw();
 			}
-
-			// for (var key in objectMap) {
-			// 	objectMap[key].draw();
-			// }
-
-			// for (var i = 0; i < 10; i++) {
-			// 	var newObject = new Circle(15 * i, 10 * i, 40);
-
-			// 	newObject.draw();
-			// 	newObject.say("Example text");
-
-			// 	objectMap.set(newObject.id, newObject);
-			// }
 		}
 
 		setInterval(draw, 10);
