@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Idea graph</title>
+	</head>
+
+	<body>
+		<h1>Ideas...</h1>
+		<canvas id=board style="width=100%; height=100%; margin=0; border:1px solid #000000;">
+	</body>
+
+	<script>
+		var canvas = document.getElementById("board");
+		var ctx = canvas.getContext("2d");
+
+		ctx.canvas.width = window.innerWidth;
+		ctx.canvas.height = window.innerHeight;
+
+		// Circle id count
+		var objectCount = 0;
+
+		// Classes
+
+		const Circle = class {
+			constructor(x, y, r) {
+				this.id = objectCount;
+				objectCount++;
+				
+				this.move(x, y);
+				this.r = r;
+				this.color = "#FFFFFF";
+
+				this.text = "";
+			}
+
+			draw() {
+				// Draw the circle
+				ctx.fillStyle = this.color;
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+				ctx.stroke();
+				ctx.fill();
+
+				// Print text inside circle
+				ctx.fillStyle = "black";
+				ctx.font = "10px Arial";
+				ctx.fillText(this.text, this.x - this.r, this.y);
+			}
+
+			move(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+
+			contains(x, y) {
+				return Math.sqrt(
+					(x - this.x) * (x - this.x) +
+					(y - this.y) * (y - this.y)
+				) <= this.r;
+			}
+
+			paint(color) {
+				this.color = color;
+			}
+
+			say(text) {
+				this.text = text;
+			}
+		}
+
+		// Objects indexed by id
+		var objectMap = {};
+
+		for (var i = 0; i < 10; i++) {
+			var newObject = new Circle(15 * i, 10 * i, 40);
+			newObject.say("Example text");
+
+			objectMap[newObject.id] = newObject;
+		}
+		
+		function draw() {
+			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+			
+			for (key in objectMap) {
+				objectMap[key].draw();
+			}
+
+			// for (var key in objectMap) {
+			// 	objectMap[key].draw();
+			// }
+
+			// for (var i = 0; i < 10; i++) {
+			// 	var newObject = new Circle(15 * i, 10 * i, 40);
+
+			// 	newObject.draw();
+			// 	newObject.say("Example text");
+
+			// 	objectMap.set(newObject.id, newObject);
+			// }
+		}
+
+		setInterval(draw, 10);
+	</script>
+</html>
