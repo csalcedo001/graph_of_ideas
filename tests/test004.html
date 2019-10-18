@@ -41,8 +41,10 @@
 				// Text to be displayed in object
 				this.text = "";
 
-				// Array of indices
+				// Object of indices
+				// TODO : Replace by array, since object cant be sorted?
 				this.outNeighbors = {};
+				// TODO : Replace by actual auto call in outNeighbors?
 				this.selfNeighbor = false; // For multigraphs, represent by number
 			}
 
@@ -83,11 +85,11 @@
 				this.text = text;
 			}
 
-			connect(id) {
-				if (id == this.id) {
+			connect(obj) {
+				if (obj.id == this.id) {
 					this.selfNeighbor = true;
 				} else {
-					this.outNeighbors[id] = objectMap[id];
+					this.outNeighbors[id] = obj;
 				}
 			}
 		}
@@ -98,6 +100,7 @@
 		delete objectMap[objectCount - 1];
 		originObject.outNeighbors = objectMap;
 
+		// Better name: currentObject -> backgroundObject
 		var currentObject = originObject;
 		var selectedObject = originObject;
 
@@ -123,12 +126,6 @@
 
 		// Obtain object in mouse coordinates
 		function touchedObject() {
-			// for (id in Object.keys(objectMap)) {
-			// 	if (objectMap[id].contains(mouseX, mouseY)) {
-			// 		return objectMap[id];
-			// 	}
-			// }
-
 			var objects = Object.values(objectMap);
 
 			for (var i = objects.length - 1; i >= 0; i--) {
@@ -142,10 +139,15 @@
 		
 		// Mouse object selection process
 		function mouseSelect() {
-			selectedObject = touchedObject();
+			var touched = touchedObject();
 
-			if (selectedObject.id != currentObject.id) {
+			if (touched.id != currentObject.id) {
+				selectedObject.paint("white");
+				selectedObject = touched;
 				selectedObject.paint("red");
+			} else {
+				selectedObject.paint("white");
+				selectedObject = touched;
 			}
 		}
 
@@ -169,8 +171,7 @@
 		function mouseReleaseEvent(evt) {
 			if (selectedObject.id != currentObject.id) {
 				clearInterval(mouseHoldEvent);
-				selectedObject.paint("white");
-			}
+			} // else, stop moving screen
 		}
 
 
@@ -179,7 +180,17 @@
 		canvas.addEventListener("mousedown", mousePressEvent, false);
 		canvas.addEventListener("mouseup", mouseReleaseEvent, false);
 		canvas.addEventListener("mouseleave", mouseReleaseEvent, false);
+		canvas.addEventListener("dblclick", function (evt) {
+			mouseSelect();
 
+			if (selectedObject.id == currentObject.id) {
+				var newObject = new Circle(mouseX, mouseY, 20);
+
+				selectedObject.connect(newObject);
+			} else {
+				selectedObject.paint("blue");
+			}
+		}, false);
 		
 		var console = new Circle(250, 250, 40);
 		console.paint("red");
