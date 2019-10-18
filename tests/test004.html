@@ -116,6 +116,12 @@
 		// Mouse coordinates
 		var mouseX, mouseY;
 
+		// Edition state
+		var STATE_VIEW = 0, // View state
+			STATE_EDIT = 1; // Text edition state
+
+		var state = STATE_VIEW;
+
 		// Update mouse coordinates
 		function mouseUpdate(evt) {
 			var rect = canvas.getBoundingClientRect();
@@ -141,13 +147,20 @@
 		function mouseSelect() {
 			var touched = touchedObject();
 
+
 			if (touched.id != currentObject.id) {
-				selectedObject.paint("white");
-				selectedObject = touched;
-				selectedObject.paint("red");
+				if (touched.id != selectedObject.id) {
+					selectedObject.paint("white");
+					selectedObject = touched;
+					selectedObject.paint("red");
+
+					state = STATE_VIEW;
+				}
 			} else {
 				selectedObject.paint("white");
 				selectedObject = touched;
+
+				state = STATE_VIEW;
 			}
 		}
 
@@ -189,18 +202,42 @@
 				selectedObject.connect(newObject);
 			} else {
 				selectedObject.paint("blue");
+
+				state = STATE_EDIT;
+			}
+		}, false);
+
+		var console = new Circle(250, 250, 40);
+		console.paint("red");
+		
+		// TODO : Improve: necessary to enable keydown
+		canvas.setAttribute("tabindex", 0);
+		canvas.addEventListener("keydown", function(evt) {
+			if (state == STATE_EDIT) {
+				var keycode = evt.keyCode;
+
+				console.say(evt.keyCode.toString());
+
+				var valid = 
+				(keycode > 47 && keycode < 58)   || // number keys
+				keycode == 32 || keycode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
+				(keycode > 64 && keycode < 91)   || // letter keys
+				(keycode > 95 && keycode < 112)  || // numpad keys
+				(keycode > 185 && keycode < 193) || // ;=,-./` (in order)
+				(keycode > 218 && keycode < 223);   // [\]' (in order)
+
+				if (valid) {
+					selectedObject.say(selectedObject.text.concat(String.fromCharCode(keycode)));
+				}
 			}
 		}, false);
 		
-		var console = new Circle(250, 250, 40);
-		console.paint("red");
-
 		function draw() {
 			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 			
-			console.say(mouseX.toString());
+			// console.say(mouseX.toString());
 			console.draw();
-			console.say(touchedObject().id.toString());
+			// console.say(state.toString());
 
 			for (key in currentObject.outNeighbors) {
 				objectMap[key].draw();
