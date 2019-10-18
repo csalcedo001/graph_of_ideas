@@ -82,6 +82,11 @@
 		var mouseX, mouseY;
 		var index = -1;
 
+		var STATE_VIEW = 0, // Full view mode
+			STATE_EDIT = 1; // Text edition state
+
+		var state = STATE_VIEW;
+
 		for (var i = 0; i < 10; i++) {
 			circles.push(new Circle(10 * i, 5 * i, 40));
 		}
@@ -91,9 +96,12 @@
 		canvas.addEventListener("mouseup", mouseReleaseFunction, false);
 		canvas.addEventListener("mouseleave", mouseReleaseFunction, false);
 		canvas.addEventListener("dblclick", function (evt) {
+			selectMouseObject();
+
 			if (index == -1) {
 				circles.push(new Circle(mouseX, mouseY, 20));
 			} else {
+				state = STATE_EDIT;
 				circles[index].paint("blue");
 			}
 		}, false);
@@ -107,17 +115,26 @@
 			mouseY = evt.clientY - rect.top;
 		}
 
+		function getMouseObjectIndex() {
+			for (var i = circles.length - 1; i >= 0; i--) {
+				if (circles[i].contains(mouseX, mouseY)) {
+					return i;
+				}
+			}
+
+			return -1;
+		}
+
+		function selectMouseObject() {
+			index = getMouseObjectIndex();
+
+			if (index != -1)
+				circles[index].paint("red");
+		}
+
 		function mousePressFunction(evt) {
 			if (!evt.metaKey) {
-				index = -1;
-
-				for (var i = circles.length - 1; i >= 0; i--) {
-					if (circles[i].contains(mouseX, mouseY)) {
-						circles[i].paint("red");
-						index = i;
-						break;
-					}
-				}
+				selectMouseObject();
 
 				if (index != -1) {
 					var xdiff = circles[index].x - mouseX;
@@ -126,7 +143,7 @@
 					hold = setInterval(function(evt) {
 						circles[index].move(mouseX + xdiff, mouseY + ydiff);
 					}, 5);
-				}
+				} // else, move screen
 			}
 		}
 
