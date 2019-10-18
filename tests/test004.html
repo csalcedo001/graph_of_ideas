@@ -99,7 +99,7 @@
 		originObject.outNeighbors = objectMap;
 
 		var currentObject = originObject;
-		var selectedObjectID = originObject.id;
+		var selectedObject = originObject;
 
 		for (var i = 0; i < 10; i++) {
 			var newObject = new Circle(15 * i, 10 * i, 40);
@@ -107,15 +107,89 @@
 		}
 
 
+
+		// Functions
+		
+		// Mouse coordinates
+		var mouseX, mouseY;
+
+		// Update mouse coordinates
+		function mouseUpdate(evt) {
+			var rect = canvas.getBoundingClientRect();
+
+			mouseX = evt.clientX - rect.left;
+			mouseY = evt.clientY - rect.top;
+		}
+
+		// Obtain object in mouse coordinates
+		function touchedObject() {
+			// for (id in Object.keys(objectMap)) {
+			// 	if (objectMap[id].contains(mouseX, mouseY)) {
+			// 		return objectMap[id];
+			// 	}
+			// }
+
+			var objects = Object.values(objectMap);
+
+			for (var i = objects.length - 1; i >= 0; i--) {
+				if (objects[i].contains(mouseX, mouseY)) {
+					return objects[i];
+				}
+			}
+
+			return currentObject;
+		}
+		
+		// Mouse object selection process
+		function mouseSelect() {
+			selectedObject = touchedObject();
+
+			if (selectedObject.id != currentObject.id) {
+				selectedObject.paint("red");
+			}
+		}
+
+		var mouseHoldEvent = null;
+
+		function mousePressEvent(evt) {
+			if (!evt.metaKey) {
+				mouseSelect();
+
+				if (selectedObject.id != currentObject.id) {
+					var xdiff = selectedObject.x - mouseX;
+					var ydiff = selectedObject.y - mouseY;
+
+					mouseHoldEvent = setInterval(function(evt) {
+						selectedObject.move(mouseX + xdiff, mouseY + ydiff);
+					}, 5);
+				} // else, move screen
+			}
+		}
+
+		function mouseReleaseEvent(evt) {
+			if (selectedObject.id != currentObject.id) {
+				clearInterval(mouseHoldEvent);
+				selectedObject.paint("white");
+			}
+		}
+
+
+		// Events
+		canvas.addEventListener("mousemove", mouseUpdate, false);
+		canvas.addEventListener("mousedown", mousePressEvent, false);
+		canvas.addEventListener("mouseup", mouseReleaseEvent, false);
+		canvas.addEventListener("mouseleave", mouseReleaseEvent, false);
+
 		
 		var console = new Circle(250, 250, 40);
+		console.paint("red");
 
 		function draw() {
 			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 			
-			console.paint("red");
-			console.say(selectedObjectID.toString());
+			console.say(mouseX.toString());
 			console.draw();
+			console.say(touchedObject().id.toString());
 
 			for (key in currentObject.outNeighbors) {
 				objectMap[key].draw();
