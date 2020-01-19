@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@4.0.16/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>Konva Connect Objects demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <script>
+      var width = window.innerWidth;
+      var height = window.innerHeight;
+
+      var stage = new Konva.Stage({
+        container: 'container',
+        width: width,
+        height: height
+      });
+
+      var layer = new Konva.Layer();
+      stage.add(layer);
+
+      var circle = new Konva.Circle({
+        radius: 100,
+        x: 100,
+        y: 100,
+        fill: 'green',
+        draggable: true
+      });
+
+      layer.add(circle);
+
+      var text = new Konva.Text({
+        text: 'Hola',
+        x: 100,
+        y: 100
+      })
+
+      layer.add(text);
+
+      var tr = new Konva.Transformer({
+        node: circle,
+        enabledAnchors: ['top-center', 'bottom-center', 'middle-left', 'middle-right'],
+        visible: false,
+        // set minimum width of text
+        boundBoxFunc: function(oldBox, newBox) {
+          newBox.width = Math.max(30, newBox.width);
+          newBox.height = Math.max(30, newBox.height);
+          return newBox;
+        }
+      });
+
+      layer.add(tr);
+
+      circle.on('dragmove', function() {
+        text.x(circle.x());
+        text.y(circle.y());
+      });
+
+      circle.on('click', function() {
+        tr.visible(true);
+      });
+
+      circle.on('transform', function() {
+        circle.setAttrs({
+          width: circle.width() * circle.scaleX(),
+          height: circle.height() * circle.scaleY(),
+          scaleX: 1,
+          scaleY: 1
+        });
+
+        text.x(circle.x());
+        text.y(circle.y());
+        text.rotation(circle.rotation());
+      });
+
+      layer.batchDraw();
+    </script>
+  </body>
+</html>

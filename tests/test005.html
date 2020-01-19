@@ -42,7 +42,7 @@
 
       var tr = new Konva.Transformer({
         node: textNode,
-        enabledAnchors: ['middle-left', 'middle-right', 'top-center', 'bottom-center'],
+        enabledAnchors: ['top-left','middle-left', 'middle-right', 'top-center', 'bottom-center'],
         // set minimum width of text
         boundBoxFunc: function(oldBox, newBox) {
           newBox.width = Math.max(30, newBox.width);
