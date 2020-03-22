@@ -35,21 +35,22 @@
 	  stage.add(layer);
 
 	  var ids = 0;
+	  function getNextId() {
+	    return (ids++).toString();
+	  }
 
 	  stage.on("dblclick", function(e) {
 		var pointer = stage.getPointerPosition();
 
 	    if (e.target.id() == "stage") {
           layer.add(new Konva.Circle({
-		    id: "circle-".concat(ids.toString()),
+		    id: "circle-".concat(getNextId()),
             radius: 100,
             x: pointer.x - stage.x(),
             y: pointer.y - stage.y(),
             fill: 'green',
             draggable: true
           }));
-
-		  ids++;
 
 	      layer.batchDraw();
 		}
@@ -84,10 +85,11 @@
 	        points: [arrowCenterX, arrowCenterY, mouseX - stage.x(), mouseY - stage.y()],
 	        stroke: 'black'
 	      });
-
 	      layer.add(arrow);
+		  arrow.moveToBottom();
 
-	      layer.batchDraw();
+
+	      layer.draw();
 
 		  sourceNode.draggable(false);
 
@@ -110,14 +112,13 @@
 		  animationStarted = false;
 		  sourceNode.draggable(true);
 
-		  window.alert(e.currentTarget.id());
-		  window.alert(e.target.id());
-		  window.alert(sourceNode.id());
-
-		  if (e.target.id() != "stage") {
+		  if (e.target.id()[0] == "c") {
 		    arrow.points([sourceNode.x(), sourceNode.y(), e.target.x(), e.target.y()]);
-			layer.batchDraw();
+		  } else {
+		    arrow.destroy();
 		  }
+
+	      layer.batchDraw();
 		}
 	  });
 
