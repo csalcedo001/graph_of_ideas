@@ -74,12 +74,6 @@
 		mouseY = positions.y - stage.y();
 
 		currentTarget = e.target.id()[0] == "c" ? e.target : stage;
-
-		if (arrowAnimation.isRunning()) {
-		  if (e.target.id()) {
-            newArrow; // Complete...
-		  }
-		}
 	  });
 
 
@@ -98,7 +92,21 @@
 	      });
 
           newArrowAnimation = new Konva.Animation(function (frame) {
-		    newArrow.points([newArrowSource.x(), newArrowSource.y(), mouseX, mouseY]);
+		    var targetX, targetY;
+
+			if (currentTarget.id()[0] == "c" && currentTarget != newArrowSource) {
+			  var xVector = currentTarget.x() - newArrowSource.x();
+			  var yVector = currentTarget.y() - newArrowSource.y();
+			  var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+
+			  targetX = currentTarget.x() - currentTarget.radius() * xVector / h;
+			  targetY = currentTarget.y() - currentTarget.radius() * yVector / h;
+			} else {
+			  targetX = mouseX;
+			  targetY = mouseY;
+			}
+
+		    newArrow.points([newArrowSource.x(), newArrowSource.y(), targetX, targetY]);
 	        document.getElementById('text').textContent = currentTarget.id();
 		  }, layer);
 
