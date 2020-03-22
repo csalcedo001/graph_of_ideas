@@ -43,12 +43,6 @@
 	    return (ids++).toString();
 	  }
 
-      var currentTarget = stage;
-
-	  stage.on("mouseover", function(e) {
-	    currentTarget = stage;
-	  });
-
 	  stage.on("dblclick", function(e) {
 		var position = stage.getPointerPosition();
 
@@ -62,10 +56,6 @@
             draggable: true
           });
 
-		  newCircle.on("mouseover", function (e) {
-            currentTarget = newCircle;
-		  });
-
           layer.add(newCircle);
 	      layer.batchDraw();
 		}
@@ -76,11 +66,14 @@
 	  var newArrowAnimation = new Konva.Animation(function(frame){}),
 	      newArrow,
 		  newArrowSource;
+      var currentTarget = stage;
 
 	  stage.on("mousemove", function(e) {
 	  	var positions = stage.getPointerPosition();
-        mouseX = positions.x;
-		mouseY = positions.y;
+        mouseX = positions.x - stage.x();
+		mouseY = positions.y - stage.y();
+
+		currentTarget = e.target.id()[0] == "c" ? e.target : stage;
 
 		if (arrowAnimation.isRunning()) {
 		  if (e.target.id()) {
@@ -91,21 +84,22 @@
 
 
 	  stage.on("mousedown", function(e) {
-	    if (e.target.id() != "stage" && window.event.metaKey) {
+	    if (e.target.id()[0] == "c" && window.event.metaKey) {
+		  if (newArrowAnimation.isRunning()) {
+			newArrowAnimation.stop();
+		    newArrow.destroy();
+		  }
+
 		  newArrowSource = e.target;
 
 	      newArrow = new Konva.Arrow({
 			id: "arrow",
-	        points: [mouseX - stage.x(), mouseY - stage.y(), mouseX - stage.x(), mouseY - stage.y()],
 	        stroke: 'black'
 	      });
 
           newArrowAnimation = new Konva.Animation(function (frame) {
-		    var positions = stage.getPointerPosition();
-			mouseX = positions.x;
-			mouseY = positions.y;
-		    newArrow.points([newArrowSource.x(), newArrowSource.y(), mouseX - stage.x(), mouseY - stage.y()]);
-	        document.getElementById('text').textContent = mouseX - stage.x();
+		    newArrow.points([newArrowSource.x(), newArrowSource.y(), mouseX, mouseY]);
+	        document.getElementById('text').textContent = currentTarget.id();
 		  }, layer);
 
 	      layer.add(newArrow);
