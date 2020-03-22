@@ -29,93 +29,102 @@
 		draggable: true
       });
 
+
       var layer = new Konva.Layer({
 	    id: "layer"
 	  });
+
 	  stage.add(layer);
 
+
 	  var ids = 0;
+
 	  function getNextId() {
 	    return (ids++).toString();
 	  }
 
+      var currentTarget = stage;
+
+	  stage.on("mouseover", function(e) {
+	    currentTarget = stage;
+	  });
+
 	  stage.on("dblclick", function(e) {
-		var pointer = stage.getPointerPosition();
+		var position = stage.getPointerPosition();
 
 	    if (e.target.id() == "stage") {
-          layer.add(new Konva.Circle({
+          var newCircle = new Konva.Circle({
 		    id: "circle-".concat(getNextId()),
             radius: 100,
-            x: pointer.x - stage.x(),
-            y: pointer.y - stage.y(),
+            x: position.x - stage.x(),
+            y: position.y - stage.y(),
             fill: 'green',
             draggable: true
-          }));
+          });
 
+		  newCircle.on("mouseover", function (e) {
+            currentTarget = newCircle;
+		  });
+
+          layer.add(newCircle);
 	      layer.batchDraw();
 		}
       });
 
+
 	  var mouseX, mouseY;
-	  var mouseHoldAnimation, animationStarted = false;
+	  var newArrowAnimation = new Konva.Animation(function(frame){}),
+	      newArrow,
+		  newArrowSource;
 
 	  stage.on("mousemove", function(e) {
 	  	var positions = stage.getPointerPosition();
         mouseX = positions.x;
 		mouseY = positions.y;
 
-		if (animationStarted) {
+		if (arrowAnimation.isRunning()) {
 		  if (e.target.id()) {
-            arrow; // Complete...
+            newArrow; // Complete...
 		  }
 		}
 	  });
 
-	  var arrowCenterX, arrowCenterY, arrow, sourceNode;
 
 	  stage.on("mousedown", function(e) {
 	    if (e.target.id() != "stage" && window.event.metaKey) {
-		  sourceNode = e.target;
+		  newArrowSource = e.target;
 
-		  arrowCenterX = mouseX - stage.x();
-		  arrowCenterY = mouseY - stage.y();
-
-	      arrow = new Konva.Arrow({
+	      newArrow = new Konva.Arrow({
 			id: "arrow",
-	        points: [arrowCenterX, arrowCenterY, mouseX - stage.x(), mouseY - stage.y()],
+	        points: [mouseX - stage.x(), mouseY - stage.y(), mouseX - stage.x(), mouseY - stage.y()],
 	        stroke: 'black'
 	      });
-	      layer.add(arrow);
-		  arrow.moveToBottom();
 
-
-	      layer.draw();
-
-		  sourceNode.draggable(false);
-
-          mouseHoldAnimation = new Konva.Animation(function (frame) {
+          newArrowAnimation = new Konva.Animation(function (frame) {
 		    var positions = stage.getPointerPosition();
 			mouseX = positions.x;
 			mouseY = positions.y;
-		    arrow.points([sourceNode.x(), sourceNode.y(), mouseX - stage.x(), mouseY - stage.y()]);
-	        document.getElementById('text').textContent = sourceNode.x();
+		    newArrow.points([newArrowSource.x(), newArrowSource.y(), mouseX - stage.x(), mouseY - stage.y()]);
+	        document.getElementById('text').textContent = mouseX - stage.x();
 		  }, layer);
 
-          animationStarted = true;
-		  mouseHoldAnimation.start();
+	      layer.add(newArrow);
+		  newArrow.moveToBottom();
+		  newArrowSource.draggable(false);
+
+		  newArrowAnimation.start();
 		}
       });
 
 	  stage.on("mouseup", function(e) {
-	    if (animationStarted) {
-	      mouseHoldAnimation.stop();
-		  animationStarted = false;
-		  sourceNode.draggable(true);
+	    if (newArrowAnimation.isRunning()) {
+	      newArrowAnimation.stop();
+		  newArrowSource.draggable(true);
 
 		  if (e.target.id()[0] == "c") {
-		    arrow.points([sourceNode.x(), sourceNode.y(), e.target.x(), e.target.y()]);
+		    newArrow.points([newArrowSource.x(), newArrowSource.y(), e.target.x(), e.target.y()]);
 		  } else {
-		    arrow.destroy();
+		    newArrow.destroy();
 		  }
 
 	      layer.batchDraw();
