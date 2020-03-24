@@ -43,6 +43,17 @@
 	    return (ids++).toString();
 	  }
 
+	  function arrowTargetPosition(source, target) {
+	    var xVector = target.x() - source.x();
+	    var yVector = target.y() - source.y();
+	    var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+
+	    return {
+	      x: target.x() - target.radius() * xVector / h,
+	      y: target.y() - target.radius() * yVector / h
+	    }
+	  }
+
 	  stage.on("dblclick", function(e) {
 		var position = stage.getPointerPosition();
 
@@ -69,9 +80,9 @@
       var currentTarget = stage;
 
 	  stage.on("mousemove", function(e) {
-	  	var positions = stage.getPointerPosition();
-        mouseX = positions.x - stage.x();
-		mouseY = positions.y - stage.y();
+	  	var position = stage.getPointerPosition();
+        mouseX = position.x - stage.x();
+		mouseY = position.y - stage.y();
 
 		currentTarget = e.target.id()[0] == "c" ? e.target : stage;
 	  });
@@ -95,12 +106,10 @@
 		    var targetX, targetY;
 
 			if (currentTarget.id()[0] == "c" && currentTarget != newArrowSource) {
-			  var xVector = currentTarget.x() - newArrowSource.x();
-			  var yVector = currentTarget.y() - newArrowSource.y();
-			  var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+			  var position = arrowTargetPosition(newArrowSource, currentTarget);
 
-			  targetX = currentTarget.x() - currentTarget.radius() * xVector / h;
-			  targetY = currentTarget.y() - currentTarget.radius() * yVector / h;
+			  targetX = position.x;
+			  targetY = position.y;
 			} else {
 			  targetX = mouseX;
 			  targetY = mouseY;
