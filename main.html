@@ -36,11 +36,17 @@
 
 	  stage.add(layer);
 
+      var circles = {};
+	  var arrows = {};
 
-	  var ids = 0;
+	  var circleIDs = 0;
+	  function circleNextID() {
+	    return (circleIDs++).toString();
+	  }
 
-	  function getNextId() {
-	    return (ids++).toString();
+	  var arrowIDs = 0;
+	  function arrowNextID() {
+	    return (arrowIDs++).toString();
 	  }
 
 	  function arrowTargetPosition(source, target) {
@@ -51,7 +57,7 @@
 	    return {
 	      x: target.x() - target.radius() * xVector / h,
 	      y: target.y() - target.radius() * yVector / h
-	    }
+	    };
 	  }
 
 	  stage.on("dblclick", function(e) {
@@ -59,7 +65,7 @@
 
 	    if (e.target.id() == "stage") {
           var newCircle = new Konva.Circle({
-		    id: "circle-".concat(getNextId()),
+		    id: "circle-".concat(circleNextID()),
             radius: 100,
             x: position.x - stage.x(),
             y: position.y - stage.y(),
@@ -67,9 +73,27 @@
             draggable: true
           });
 
+		  circles[newCircle.id()] = {
+		    obj: newCircle,
+			arrows: []
+          };
+
+		  newCircle.on("dragmove", () => {
+            circles[newCircle.id()].arrows.forEach(arrowID => {
+			  var arrow = arrows[arrowID];
+              position = arrowTargetPosition(arrow.source, arrow.target);
+
+			  arrow.obj.points([arrow.source.x(), arrow.source.y(), position.x, position.y]);
+			});
+	        document.getElementById('text').textContent = "OK";
+
+			stage.draw();
+		  });
+
+
           layer.add(newCircle);
 	      layer.batchDraw();
-		}
+		};
       });
 
 
@@ -98,7 +122,7 @@
 		  newArrowSource = e.target;
 
 	      newArrow = new Konva.Arrow({
-			id: "arrow",
+			id: "arrow-".concat(arrowNextID()),
 	        stroke: 'black'
 	      });
 
@@ -116,7 +140,6 @@
 			}
 
 		    newArrow.points([newArrowSource.x(), newArrowSource.y(), targetX, targetY]);
-	        document.getElementById('text').textContent = currentTarget.id();
 		  }, layer);
 
 	      layer.add(newArrow);
@@ -133,7 +156,13 @@
 		  newArrowSource.draggable(true);
 
 		  if (e.target.id()[0] == "c") {
-		    newArrow.points([newArrowSource.x(), newArrowSource.y(), e.target.x(), e.target.y()]);
+		    arrows[newArrow.id()] = {
+              obj: newArrow,
+			  source: newArrowSource,
+			  target: currentTarget
+			};
+			circles[newArrowSource.id()].arrows.push(newArrow.id());
+			circles[currentTarget.id()].arrows.push(newArrow.id());
 		  } else {
 		    newArrow.destroy();
 		  }
