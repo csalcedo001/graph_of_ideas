@@ -83,21 +83,26 @@
             y: 0,
             fill: 'green',
           });
-          // var text = new Konva.text({
-          //   id: "text-".concat(id),
-          //   x: 0,
-          //   y: 0,
-          //   text: "Test text"
-          // });
+
+          var text = new Konva.Text({
+            id: "text-".concat(id),
+            x: 0,
+            y: 0,
+            text: "Test text"
+          });
+
+          text.x(-text.width() / 2);
+          text.y(-text.height() / 2);
 
           nodes[newNode.id()] = {
             group: newNode,
             circle: newCircle,
+            text: text,
             edges: []
           };
 
           newNode.add(newCircle);
-          //newNode.add(text);
+          newNode.add(text);
 
           newNode.on("dragmove", () => {
             nodes[newNode.id()].edges.forEach(edgeID => {
@@ -126,9 +131,12 @@
         var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
-        document.getElementById('text').textContent = mouseX;
 
-        currentTarget = e.target.id()[0] == "c" ? e.target.getParent() : stage;
+        currentTarget = e.target.id()[0] == "c" || e.target.id()[0] == "t" ?
+          e.target.getParent() :
+          stage;
+
+        document.getElementById('text').textContent = currentTarget.id();
       });
 
 
