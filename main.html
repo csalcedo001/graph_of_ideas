@@ -22,154 +22,319 @@
       var height = window.innerHeight;
 
       var stage = new Konva.Stage({
-	    id: "stage",
+      id: "stage",
         container: 'container',
         width: width,
         height: height,
-		draggable: true
+        draggable: true
       });
+
 
 
       var layer = new Konva.Layer({
-	    id: "layer"
-	  });
+        id: "layer"
+      });
 
-	  stage.add(layer);
+      stage.add(layer);
 
-      var circles = {};
-	  var arrows = {};
+      var nodes = {};
+      var edges = {};
 
-	  var circleIDs = 0;
-	  function circleNextID() {
-	    return (circleIDs++).toString();
-	  }
+      var nodeID = 0;
+      function nodeNextID() {
+        return (nodeID++).toString();
+      }
 
-	  var arrowIDs = 0;
-	  function arrowNextID() {
-	    return (arrowIDs++).toString();
-	  }
+      var edgeID = 0;
+      function edgeNextID() {
+        return (edgeID++).toString();
+      }
 
-	  function arrowTargetPosition(source, target) {
-	    var xVector = target.x() - source.x();
-	    var yVector = target.y() - source.y();
-	    var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+      function edgeTargetPosition(source, target) {
+        var xVector = target.group.x() - source.group.x();
+        var yVector = target.group.y() - source.group.y();
+        var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
 
-	    return {
-	      x: target.x() - target.radius() * xVector / h,
-	      y: target.y() - target.radius() * yVector / h
-	    };
-	  }
+        return {
+          x: target.group.x() - target.circle.radius() * xVector / h,
+          y: target.group.y() - target.circle.radius() * yVector / h
+        };
+      }
+      var group = new Konva.Group({x:1000,y:1000});
+      group.add(new Konva.Circle({x:0,y:0,radius:100,fill:"green",id:"node"}));
+      layer.add(group);
 
-	  stage.on("dblclick", function(e) {
-		var position = stage.getPointerPosition();
+      stage.on("dblclick", function(e) {
+        if (currentTarget.id() == "stage") {
+          var position = stage.getPointerPosition();
+          var id = nodeNextID();
 
-	    if (e.target.id() == "stage") {
-          var newCircle = new Konva.Circle({
-		    id: "circle-".concat(circleNextID()),
-            radius: 100,
+          var newNode = new Konva.Group({
+            id: "node-".concat(id),
             x: position.x - stage.x(),
             y: position.y - stage.y(),
-            fill: 'green',
             draggable: true
+          })
+
+          var newCircle = new Konva.Circle({
+            id: "circle-".concat(id),
+            radius: 100,
+            x: 0,
+            y: 0,
+            fill: 'green',
           });
 
-		  circles[newCircle.id()] = {
-		    obj: newCircle,
-			arrows: []
+          var text = new Konva.Text({
+            id: "text-".concat(id),
+            x: 0,
+            y: 0,
+            text: "Test text"
+          });
+
+          text.x(-text.width() / 2);
+          text.y(-text.height() / 2);
+
+          nodes[newNode.id()] = {
+            group: newNode,
+            circle: newCircle,
+            text: text,
+            edges: []
           };
 
-		  newCircle.on("dragmove", () => {
-            circles[newCircle.id()].arrows.forEach(arrowID => {
-			  var arrow = arrows[arrowID];
-              position = arrowTargetPosition(arrow.source, arrow.target);
+          newNode.add(newCircle);
+          newNode.add(text);
 
-			  arrow.obj.points([arrow.source.x(), arrow.source.y(), position.x, position.y]);
-			});
-	        document.getElementById('text').textContent = "OK";
+          newNode.on("dragmove", () => {
+            nodes[newNode.id()].edges.forEach(edgeID => {
+              var edge = edges[edgeID];
+              position = edgeTargetPosition(nodes[edge.source.id()], nodes[edge.target.id()]);
 
-			stage.draw();
-		  });
+              edge.edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+            });
 
+            stage.draw();
+          });
 
-          layer.add(newCircle);
-	      layer.batchDraw();
-		};
+          layer.add(newNode);
+          layer.batchDraw();
+        } else if (currentTarget.id()[0] == "n") {
+          var node = nodes[currentTarget.id()];
+          // From this point until the end of the if block, code has been
+          // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
+          var textNode = node.text;
+
+          node.text.hide();
+          layer.batchDraw();
+
+          // create textarea over canvas with absolute position
+          // first we need to find position for textarea
+          // how to find it?
+
+          // at first lets find position of text node relative to the stage:
+          var textPosition = textNode.absolutePosition();
+
+          // then lets find position of stage container on the page:
+          var stageBox = stage.container().getBoundingClientRect();
+
+          // so position of textarea will be the sum of positions above:
+          var areaPosition = {
+            x: stageBox.left + textPosition.x,
+            y: stageBox.top + textPosition.y
+          };
+
+          // create textarea and style it
+          var textarea = document.createElement('textarea');
+          document.body.appendChild(textarea);
+
+          // apply many styles to match text on canvas as close as possible
+          // remember that text rendering on canvas and on the textarea can be different
+          // and sometimes it is hard to make it 100% the same. But we will try...
+          textarea.value = textNode.text();
+          textarea.style.position = 'absolute';
+          textarea.style.top = areaPosition.y + 'px';
+          textarea.style.left = areaPosition.x + 'px';
+          textarea.style.width = textNode.width() - textNode.padding() * 2 + 'px';
+          textarea.style.height =
+            textNode.height() - textNode.padding() * 2 + 5 + 'px';
+          textarea.style.fontSize = textNode.fontSize() + 'px';
+          textarea.style.border = 'none';
+          textarea.style.padding = '0px';
+          textarea.style.margin = '0px';
+          textarea.style.overflow = 'hidden';
+          textarea.style.background = 'none';
+          textarea.style.outline = 'none';
+          textarea.style.resize = 'none';
+          textarea.style.lineHeight = textNode.lineHeight();
+          textarea.style.fontFamily = textNode.fontFamily();
+          textarea.style.transformOrigin = 'left top';
+          textarea.style.textAlign = textNode.align();
+          textarea.style.color = textNode.fill();
+          rotation = textNode.rotation();
+          var transform = '';
+          if (rotation) {
+            transform += 'rotateZ(' + rotation + 'deg)';
+          }
+
+          var px = 0;
+          // also we need to slightly move textarea on firefox
+          // because it jumps a bit
+          var isFirefox =
+            navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+          if (isFirefox) {
+            px += 2 + Math.round(textNode.fontSize() / 20);
+          }
+          transform += 'translateY(-' + px + 'px)';
+
+          textarea.style.transform = transform;
+
+          // reset height
+          textarea.style.height = 'auto';
+          // after browsers resized it we can set actual value
+          textarea.style.height = textarea.scrollHeight + 3 + 'px';
+
+          textarea.focus();
+
+          function removeTextarea() {
+            textarea.parentNode.removeChild(textarea);
+            window.removeEventListener('click', handleOutsideClick);
+            textNode.show();
+            layer.draw();
+          }
+
+          function setTextareaWidth(newWidth) {
+            if (!newWidth) {
+              // set width for placeholder
+              newWidth = textNode.placeholder.length * textNode.fontSize();
+            }
+            // some extra fixes on different browsers
+            var isSafari = /^((?!chrome|android).)*safari/i.test(
+              navigator.userAgent
+            );
+            var isFirefox =
+              navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+            if (isSafari || isFirefox) {
+              newWidth = Math.ceil(newWidth);
+            }
+
+            var isEdge =
+              document.documentMode || /Edge/.test(navigator.userAgent);
+            if (isEdge) {
+              newWidth += 1;
+            }
+            textarea.style.width = newWidth + 'px';
+          }
+
+          textarea.addEventListener('keydown', function(e) {
+            // hide on enter
+            // but don't hide on shift + enter
+            if (e.keyCode === 13 && !e.shiftKey) {
+              textNode.text(textarea.value);
+              removeTextarea();
+            }
+            // on esc do not set value back to node
+            if (e.keyCode === 27) {
+              removeTextarea();
+            }
+          });
+
+          textarea.addEventListener('keydown', function(e) {
+            scale = textNode.getAbsoluteScale().x;
+            setTextareaWidth(textNode.width() * scale);
+            textarea.style.height = 'auto';
+            textarea.style.height =
+              textarea.scrollHeight + textNode.fontSize() + 'px';
+          });
+
+          function handleOutsideClick(e) {
+            if (e.target !== textarea) {
+              textNode.text(textarea.value);
+              removeTextarea();
+            }
+          }
+          setTimeout(() => {
+            window.addEventListener('click', handleOutsideClick);
+          });
+        }
       });
 
 
-	  var mouseX, mouseY;
-	  var newArrowAnimation = new Konva.Animation(function(frame){}),
-	      newArrow,
-		  newArrowSource;
+      var mouseX, mouseY;
+      var newEdgeAnimation = new Konva.Animation(function(frame){}),
+          newEdge,
+          newEdgeSource;
       var currentTarget = stage;
 
-	  stage.on("mousemove", function(e) {
-	  	var position = stage.getPointerPosition();
+      stage.on("mousemove", function(e) {
+        var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
-		mouseY = position.y - stage.y();
+        mouseY = position.y - stage.y();
 
-		currentTarget = e.target.id()[0] == "c" ? e.target : stage;
-	  });
+        currentTarget = e.target.id()[0] == "c" || e.target.id()[0] == "t" ?
+          e.target.getParent() :
+          stage;
 
-
-	  stage.on("mousedown", function(e) {
-	    if (e.target.id()[0] == "c" && window.event.metaKey) {
-		  if (newArrowAnimation.isRunning()) {
-			newArrowAnimation.stop();
-		    newArrow.destroy();
-		  }
-
-		  newArrowSource = e.target;
-
-	      newArrow = new Konva.Arrow({
-			id: "arrow-".concat(arrowNextID()),
-	        stroke: 'black'
-	      });
-
-          newArrowAnimation = new Konva.Animation(function (frame) {
-		    var targetX, targetY;
-
-			if (currentTarget.id()[0] == "c" && currentTarget != newArrowSource) {
-			  var position = arrowTargetPosition(newArrowSource, currentTarget);
-
-			  targetX = position.x;
-			  targetY = position.y;
-			} else {
-			  targetX = mouseX;
-			  targetY = mouseY;
-			}
-
-		    newArrow.points([newArrowSource.x(), newArrowSource.y(), targetX, targetY]);
-		  }, layer);
-
-	      layer.add(newArrow);
-		  newArrow.moveToBottom();
-		  newArrowSource.draggable(false);
-
-		  newArrowAnimation.start();
-		}
+        document.getElementById('text').textContent = currentTarget.id();
       });
 
-	  stage.on("mouseup", function(e) {
-	    if (newArrowAnimation.isRunning()) {
-	      newArrowAnimation.stop();
-		  newArrowSource.draggable(true);
 
-		  if (e.target.id()[0] == "c") {
-		    arrows[newArrow.id()] = {
-              obj: newArrow,
-			  source: newArrowSource,
-			  target: currentTarget
-			};
-			circles[newArrowSource.id()].arrows.push(newArrow.id());
-			circles[currentTarget.id()].arrows.push(newArrow.id());
-		  } else {
-		    newArrow.destroy();
-		  }
+      stage.on("mousedown", function(e) {
+        if (currentTarget.id()[0] == "n" && window.event.metaKey) {
+          if (newEdgeAnimation.isRunning()) {
+            newEdgeAnimation.stop();
+            newEdge.destroy();
+          }
 
-	      layer.batchDraw();
-		}
-	  });
+          newEdgeSource = currentTarget;
+
+          newEdge = new Konva.Arrow({
+            id: "arrow-".concat(edgeNextID()),
+            stroke: 'black'
+          });
+
+          newEdgeAnimation = new Konva.Animation(function (frame) {
+            var targetX, targetY;
+
+            if (currentTarget.id()[0] == "n" && currentTarget != newEdgeSource) {
+              var position = edgeTargetPosition(nodes[newEdgeSource.id()], nodes[currentTarget.id()]);
+
+              targetX = position.x;
+              targetY = position.y;
+            } else {
+              targetX = mouseX;
+              targetY = mouseY;
+            }
+
+            newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
+          }, layer);
+
+          layer.add(newEdge);
+          newEdge.moveToBottom();
+          newEdgeSource.draggable(false);
+
+          newEdgeAnimation.start();
+        }
+      });
+
+      stage.on("mouseup", function(e) {
+        if (newEdgeAnimation.isRunning()) {
+          newEdgeAnimation.stop();
+          newEdgeSource.draggable(true);
+
+          if (currentTarget.id()[0] == "n") {
+            edges[newEdge.id()] = {
+              edge: newEdge,
+              source: newEdgeSource,
+              target: currentTarget
+            };
+            nodes[newEdgeSource.id()].edges.push(newEdge.id());
+            nodes[currentTarget.id()].edges.push(newEdge.id());
+          } else {
+            newEdge.destroy();
+          }
+
+          layer.batchDraw();
+        }
+      });
 
       // var text = new Konva.Text({
       //   text: 'Hola',
