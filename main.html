@@ -22,51 +22,50 @@
       var height = window.innerHeight;
 
       var stage = new Konva.Stage({
-	    id: "stage",
+      id: "stage",
         container: 'container',
         width: width,
         height: height,
-		draggable: true
+        draggable: true
       });
 
 
-
       var layer = new Konva.Layer({
-	    id: "layer"
-	  });
+        id: "layer"
+      });
 
-	  stage.add(layer);
+      stage.add(layer);
 
       var nodes = {};
-	  var edges = {};
+      var edges = {};
 
-	  var nodeID = 0;
-	  function nodeNextID() {
-	    return (nodeID++).toString();
-	  }
+      var nodeID = 0;
+      function nodeNextID() {
+        return (nodeID++).toString();
+      }
 
-	  var edgeID = 0;
-	  function edgeNextID() {
-	    return (edgeID++).toString();
-	  }
+      var edgeID = 0;
+      function edgeNextID() {
+        return (edgeID++).toString();
+      }
 
-	  function edgeTargetPosition(source, target) {
-	    var xVector = target.x() - source.x();
-	    var yVector = target.y() - source.y();
-	    var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+      function edgeTargetPosition(source, target) {
+        var xVector = target.x() - source.x();
+        var yVector = target.y() - source.y();
+        var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
 
-	    return {
-	      x: target.x() - target.radius() * xVector / h,
-	      y: target.y() - target.radius() * yVector / h
-	    };
-	  }
+        return {
+          x: target.x() - target.radius() * xVector / h,
+          y: target.y() - target.radius() * yVector / h
+        };
+      }
 
-	  stage.on("dblclick", function(e) {
-	    if (e.target.id() == "stage") {
-		  var position = stage.getPointerPosition();
-		  
+      stage.on("dblclick", function(e) {
+        if (e.target.id() == "stage") {
+          var position = stage.getPointerPosition();
+
           var newCircle = new Konva.Circle({
-		    id: "circle-".concat(nodeNextID()),
+            id: "circle-".concat(nodeNextID()),
             radius: 100,
             x: position.x - stage.x(),
             y: position.y - stage.y(),
@@ -74,103 +73,103 @@
             draggable: true
           });
 
-		  nodes[newCircle.id()] = {
-		    obj: newCircle,
-			edges: []
+          nodes[newCircle.id()] = {
+            obj: newCircle,
+            edges: []
           };
 
-		  newCircle.on("dragmove", () => {
+          newCircle.on("dragmove", () => {
             nodes[newCircle.id()].edges.forEach(edgeID => {
-			  var edge = edges[edgeID];
+              var edge = edges[edgeID];
               position = edgeTargetPosition(edge.source, edge.target);
 
-			  edge.obj.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-			});
-	        document.getElementById('text').textContent = "OK";
+              edge.obj.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+            });
+            document.getElementById('text').textContent = "OK";
 
-			stage.draw();
-		  });
+            stage.draw();
+          });
 
 
           layer.add(newCircle);
-	      layer.batchDraw();
-		};
+          layer.batchDraw();
+        };
       });
 
 
-	  var mouseX, mouseY;
-	  var newEdgeAnimation = new Konva.Animation(function(frame){}),
-	      newEdge,
-		  newEdgeSource;
+      var mouseX, mouseY;
+      var newEdgeAnimation = new Konva.Animation(function(frame){}),
+          newEdge,
+          newEdgeSource;
       var currentTarget = stage;
 
-	  stage.on("mousemove", function(e) {
-	  	var position = stage.getPointerPosition();
+      stage.on("mousemove", function(e) {
+        var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
-		mouseY = position.y - stage.y();
+        mouseY = position.y - stage.y();
 
-		currentTarget = e.target.id()[0] == "c" ? e.target : stage;
-	  });
-
-
-	  stage.on("mousedown", function(e) {
-	    if (e.target.id()[0] == "c" && window.event.metaKey) {
-		  if (newEdgeAnimation.isRunning()) {
-			newEdgeAnimation.stop();
-		    newEdge.destroy();
-		  }
-
-		  newEdgeSource = e.target;
-
-	      newEdge = new Konva.Arrow({
-			id: "arrow-".concat(edgeNextID()),
-	        stroke: 'black'
-	      });
-
-          newEdgeAnimation = new Konva.Animation(function (frame) {
-		    var targetX, targetY;
-
-			if (currentTarget.id()[0] == "c" && currentTarget != newEdgeSource) {
-			  var position = edgeTargetPosition(newEdgeSource, currentTarget);
-
-			  targetX = position.x;
-			  targetY = position.y;
-			} else {
-			  targetX = mouseX;
-			  targetY = mouseY;
-			}
-
-		    newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
-		  }, layer);
-
-	      layer.add(newEdge);
-		  newEdge.moveToBottom();
-		  newEdgeSource.draggable(false);
-
-		  newEdgeAnimation.start();
-		}
+        currentTarget = e.target.id()[0] == "c" ? e.target : stage;
       });
 
-	  stage.on("mouseup", function(e) {
-	    if (newEdgeAnimation.isRunning()) {
-	      newEdgeAnimation.stop();
-		  newEdgeSource.draggable(true);
 
-		  if (e.target.id()[0] == "c") {
-		    edges[newEdge.id()] = {
+      stage.on("mousedown", function(e) {
+        if (e.target.id()[0] == "c" && window.event.metaKey) {
+          if (newEdgeAnimation.isRunning()) {
+            newEdgeAnimation.stop();
+            newEdge.destroy();
+          }
+
+          newEdgeSource = e.target;
+
+          newEdge = new Konva.Arrow({
+            id: "arrow-".concat(edgeNextID()),
+            stroke: 'black'
+          });
+
+          newEdgeAnimation = new Konva.Animation(function (frame) {
+            var targetX, targetY;
+
+            if (currentTarget.id()[0] == "c" && currentTarget != newEdgeSource) {
+              var position = edgeTargetPosition(newEdgeSource, currentTarget);
+
+              targetX = position.x;
+              targetY = position.y;
+            } else {
+              targetX = mouseX;
+              targetY = mouseY;
+            }
+
+            newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
+          }, layer);
+
+          layer.add(newEdge);
+          newEdge.moveToBottom();
+          newEdgeSource.draggable(false);
+
+          newEdgeAnimation.start();
+        }
+      });
+
+      stage.on("mouseup", function(e) {
+        if (newEdgeAnimation.isRunning()) {
+          newEdgeAnimation.stop();
+          newEdgeSource.draggable(true);
+
+          if (e.target.id()[0] == "c") {
+            edges[newEdge.id()] = {
               obj: newEdge,
-			  source: newEdgeSource,
-			  target: currentTarget
-			};
-			nodes[newEdgeSource.id()].edges.push(newEdge.id());
-			nodes[currentTarget.id()].edges.push(newEdge.id());
-		  } else {
-		    newEdge.destroy();
-		  }
+              source: newEdgeSource,
+              target: currentTarget
+            };
+            nodes[newEdgeSource.id()].edges.push(newEdge.id());
+            nodes[currentTarget.id()].edges.push(newEdge.id());
+          } else {
+            newEdge.destroy();
+          }
 
-	      layer.batchDraw();
-		}
-	  });
+          layer.batchDraw();
+        }
+      });
 
       // var text = new Konva.Text({
       //   text: 'Hola',
