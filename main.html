@@ -30,26 +30,27 @@
       });
 
 
+
       var layer = new Konva.Layer({
 	    id: "layer"
 	  });
 
 	  stage.add(layer);
 
-      var circles = {};
-	  var arrows = {};
+      var nodes = {};
+	  var edges = {};
 
-	  var circleIDs = 0;
-	  function circleNextID() {
-	    return (circleIDs++).toString();
+	  var nodeID = 0;
+	  function nodeNextID() {
+	    return (nodeID++).toString();
 	  }
 
-	  var arrowIDs = 0;
-	  function arrowNextID() {
-	    return (arrowIDs++).toString();
+	  var edgeID = 0;
+	  function edgeNextID() {
+	    return (edgeID++).toString();
 	  }
 
-	  function arrowTargetPosition(source, target) {
+	  function edgeTargetPosition(source, target) {
 	    var xVector = target.x() - source.x();
 	    var yVector = target.y() - source.y();
 	    var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
@@ -61,11 +62,11 @@
 	  }
 
 	  stage.on("dblclick", function(e) {
-		var position = stage.getPointerPosition();
-
 	    if (e.target.id() == "stage") {
+		  var position = stage.getPointerPosition();
+		  
           var newCircle = new Konva.Circle({
-		    id: "circle-".concat(circleNextID()),
+		    id: "circle-".concat(nodeNextID()),
             radius: 100,
             x: position.x - stage.x(),
             y: position.y - stage.y(),
@@ -73,17 +74,17 @@
             draggable: true
           });
 
-		  circles[newCircle.id()] = {
+		  nodes[newCircle.id()] = {
 		    obj: newCircle,
-			arrows: []
+			edges: []
           };
 
 		  newCircle.on("dragmove", () => {
-            circles[newCircle.id()].arrows.forEach(arrowID => {
-			  var arrow = arrows[arrowID];
-              position = arrowTargetPosition(arrow.source, arrow.target);
+            nodes[newCircle.id()].edges.forEach(edgeID => {
+			  var edge = edges[edgeID];
+              position = edgeTargetPosition(edge.source, edge.target);
 
-			  arrow.obj.points([arrow.source.x(), arrow.source.y(), position.x, position.y]);
+			  edge.obj.points([edge.source.x(), edge.source.y(), position.x, position.y]);
 			});
 	        document.getElementById('text').textContent = "OK";
 
@@ -98,9 +99,9 @@
 
 
 	  var mouseX, mouseY;
-	  var newArrowAnimation = new Konva.Animation(function(frame){}),
-	      newArrow,
-		  newArrowSource;
+	  var newEdgeAnimation = new Konva.Animation(function(frame){}),
+	      newEdge,
+		  newEdgeSource;
       var currentTarget = stage;
 
 	  stage.on("mousemove", function(e) {
@@ -114,23 +115,23 @@
 
 	  stage.on("mousedown", function(e) {
 	    if (e.target.id()[0] == "c" && window.event.metaKey) {
-		  if (newArrowAnimation.isRunning()) {
-			newArrowAnimation.stop();
-		    newArrow.destroy();
+		  if (newEdgeAnimation.isRunning()) {
+			newEdgeAnimation.stop();
+		    newEdge.destroy();
 		  }
 
-		  newArrowSource = e.target;
+		  newEdgeSource = e.target;
 
-	      newArrow = new Konva.Arrow({
-			id: "arrow-".concat(arrowNextID()),
+	      newEdge = new Konva.Arrow({
+			id: "arrow-".concat(edgeNextID()),
 	        stroke: 'black'
 	      });
 
-          newArrowAnimation = new Konva.Animation(function (frame) {
+          newEdgeAnimation = new Konva.Animation(function (frame) {
 		    var targetX, targetY;
 
-			if (currentTarget.id()[0] == "c" && currentTarget != newArrowSource) {
-			  var position = arrowTargetPosition(newArrowSource, currentTarget);
+			if (currentTarget.id()[0] == "c" && currentTarget != newEdgeSource) {
+			  var position = edgeTargetPosition(newEdgeSource, currentTarget);
 
 			  targetX = position.x;
 			  targetY = position.y;
@@ -139,32 +140,32 @@
 			  targetY = mouseY;
 			}
 
-		    newArrow.points([newArrowSource.x(), newArrowSource.y(), targetX, targetY]);
+		    newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
 		  }, layer);
 
-	      layer.add(newArrow);
-		  newArrow.moveToBottom();
-		  newArrowSource.draggable(false);
+	      layer.add(newEdge);
+		  newEdge.moveToBottom();
+		  newEdgeSource.draggable(false);
 
-		  newArrowAnimation.start();
+		  newEdgeAnimation.start();
 		}
       });
 
 	  stage.on("mouseup", function(e) {
-	    if (newArrowAnimation.isRunning()) {
-	      newArrowAnimation.stop();
-		  newArrowSource.draggable(true);
+	    if (newEdgeAnimation.isRunning()) {
+	      newEdgeAnimation.stop();
+		  newEdgeSource.draggable(true);
 
 		  if (e.target.id()[0] == "c") {
-		    arrows[newArrow.id()] = {
-              obj: newArrow,
-			  source: newArrowSource,
+		    edges[newEdge.id()] = {
+              obj: newEdge,
+			  source: newEdgeSource,
 			  target: currentTarget
 			};
-			circles[newArrowSource.id()].arrows.push(newArrow.id());
-			circles[currentTarget.id()].arrows.push(newArrow.id());
+			nodes[newEdgeSource.id()].edges.push(newEdge.id());
+			nodes[currentTarget.id()].edges.push(newEdge.id());
 		  } else {
-		    newArrow.destroy();
+		    newEdge.destroy();
 		  }
 
 	      layer.batchDraw();
