@@ -2,6 +2,7 @@
 <html>
   <head>
     <script src="https://unpkg.com/konva@4.0.16/konva.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <meta charset="utf-8" />
     <title>Konva Connect Objects demo</title>
     <style>
@@ -37,42 +38,15 @@
 
       stage.add(layer);
 
+
       var nodes = {};
       var edges = {};
 
-      var nodeID = 0;
-      function nodeNextID() {
-        return (nodeID++).toString();
-      }
-
-      var edgeID = 0;
-      function edgeNextID() {
-        return (edgeID++).toString();
-      }
-
-      function edgeTargetPosition(source, target) {
-        var xVector = target.group.x() - source.group.x();
-        var yVector = target.group.y() - source.group.y();
-        var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
-
-        return {
-          x: target.group.x() - target.circle.radius() * xVector / h,
-          y: target.group.y() - target.circle.radius() * yVector / h
-        };
-      }
-      var group = new Konva.Group({x:1000,y:1000});
-      group.add(new Konva.Circle({x:0,y:0,radius:100,fill:"green",id:"node"}));
-      layer.add(group);
-
-      stage.on("dblclick", function(e) {
-        if (currentTarget.id() == "stage") {
-          var position = stage.getPointerPosition();
-          var id = nodeNextID();
-
+      function createNode(id, x, y, text="") {
           var newNode = new Konva.Group({
             id: "node-".concat(id),
-            x: position.x - stage.x(),
-            y: position.y - stage.y(),
+            x: x - stage.x(),
+            y: y - stage.y(),
             draggable: true
           })
 
@@ -84,25 +58,27 @@
             fill: 'green',
           });
 
-          var text = new Konva.Text({
+          var newText = new Konva.Text({
             id: "text-".concat(id),
             x: 0,
             y: 0,
-            text: "Test text"
+            text: text
           });
 
-          text.x(-text.width() / 2);
-          text.y(-text.height() / 2);
+          newText.x(-newText.width() / 2);
+          newText.y(-newText.height() / 2);
 
-          nodes[newNode.id()] = {
+          var nodeStruct = {
             group: newNode,
             circle: newCircle,
-            text: text,
+            text: newText,
             edges: []
           };
 
+          nodes[newNode.id()] = nodeStruct;
+
           newNode.add(newCircle);
-          newNode.add(text);
+          newNode.add(newText);
 
           newNode.on("dragmove", () => {
             nodes[newNode.id()].edges.forEach(edgeID => {
@@ -117,6 +93,42 @@
 
           layer.add(newNode);
           layer.batchDraw();
+
+          return nodeStruct;
+      }
+
+      $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
+        data.nodes.forEach(nodeStruct => {
+          createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
+        });
+        //edges = data.edges;
+      });
+
+      var nodeID = 100;
+      function nodeNextID() {
+        return (nodeID++).toString();
+      }
+
+      var edgeID = 100;
+      function edgeNextID() {
+        return (edgeID++).toString();
+      }
+
+      function edgeTargetPosition(source, target) {
+        var xVector = target.group.x() - source.group.x();
+        var yVector = target.group.y() - source.group.y();
+        var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+
+        return {
+          x: target.group.x() - target.circle.radius() * xVector / h,
+          y: target.group.y() - target.circle.radius() * yVector / h
+        };
+      }
+
+      stage.on("dblclick", function(e) {
+        if (currentTarget.id() == "stage") {
+          var position = stage.getPointerPosition();
+          var node = createNode(nodeNextID(), position.x, position.y);
         } else if (currentTarget.id()[0] == "n") {
           var node = nodes[currentTarget.id()];
           // From this point until the end of the if block, code has been
