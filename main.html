@@ -60,9 +60,6 @@
           y: target.group.y() - target.circle.radius() * yVector / h
         };
       }
-      var group = new Konva.Group({x:1000,y:1000});
-      group.add(new Konva.Circle({x:0,y:0,radius:100,fill:"green",id:"node"}));
-      layer.add(group);
 
       stage.on("dblclick", function(e) {
         if (currentTarget.id() == "stage") {
@@ -246,13 +243,12 @@
           });
 
           function handleOutsideClick(e) {
-            if (e.target !== textarea) {
-              textNode.text(textarea.value);
+            if (e.target !== textarea && currentTarget != prevSelectedTarget) {
               removeTextarea();
             }
           }
           setTimeout(() => {
-            window.addEventListener('click', handleOutsideClick);
+            window.addEventListener('mousedown', handleOutsideClick);
           });
         }
       });
@@ -264,20 +260,30 @@
           newEdgeSource;
       var currentTarget = stage;
 
+      function getNode(element) {
+        var id = element.id()[0];
+        return id == "c" || id == "t" ? element.getParent() : stage;
+      }
+
       stage.on("mousemove", function(e) {
         var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
-        currentTarget = e.target.id()[0] == "c" || e.target.id()[0] == "t" ?
-          e.target.getParent() :
-          stage;
+        currentTarget = getNode(e.target);
 
-        document.getElementById('text').textContent = currentTarget.id();
+        document.getElementById('text').textContent = selectedTarget.id();
       });
+
+      var selectedTarget = stage;
+      var prevSelectedTarget = stage;
 
 
       stage.on("mousedown", function(e) {
+        prevSelectedTarget = selectedTarget;
+        selectedTarget = getNode(e.target);
+        currentTarget = selectedTarget;
+
         if (currentTarget.id()[0] == "n" && window.event.metaKey) {
           if (newEdgeAnimation.isRunning()) {
             newEdgeAnimation.stop();
