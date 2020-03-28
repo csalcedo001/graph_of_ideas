@@ -81,8 +81,8 @@
           newNode.add(newText);
 
           newNode.on("dragmove", () => {
-            nodes[newNode.id()].edges.forEach(edgeID => {
-              var edge = edges[edgeID];
+            nodes[newNode.id()].edges.forEach(id => {
+              var edge = edges[id];
               position = edgeTargetPosition(nodes[edge.source.id()], nodes[edge.target.id()]);
 
               edge.edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
@@ -97,11 +97,44 @@
           return nodeStruct;
       }
 
+      function createEdge(id, source, target) {
+        id = "arrow-".concat(id);
+        if (newEdge === null) {
+          var position = edgeTargetPosition(nodes[source.id()], nodes[target.id()]);
+          newEdge = new Konva.Arrow({
+            id: id,
+            points: [source.x(), source.y(), position.x, position.y],
+            stroke: "black"
+          });
+          layer.add(newEdge);
+          newEdge.moveToBottom();
+        } else {
+          newEdge.id(id);
+        }
+
+        edgeStruct = {
+          edge: newEdge,
+          source: source,
+          target: target
+        };
+        edges[id] = edgeStruct;
+
+        nodes[source.id()].edges.push(id);
+        nodes[target.id()].edges.push(id);
+        newEdge = null;
+
+        layer.batchDraw();
+
+        return edgeStruct;
+      }
+
       $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
         data.nodes.forEach(nodeStruct => {
           createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
         });
-        //edges = data.edges;
+        data.edges.forEach(edgeStruct => {
+          createEdge(edgeNextID(), nodes["node-".concat(edgeStruct[0])].group, nodes["node-".concat(edgeStruct[1])].group)
+        })
       });
 
       var nodeID = 100;
@@ -109,7 +142,7 @@
         return (nodeID++).toString();
       }
 
-      var edgeID = 100;
+      var edgeID = 0;
       function edgeNextID() {
         return (edgeID++).toString();
       }
@@ -272,7 +305,7 @@
 
       var mouseX, mouseY;
       var newEdgeAnimation = new Konva.Animation(function(frame){}),
-          newEdge,
+          newEdge = null,
           newEdgeSource;
       var currentTarget = stage;
 
@@ -299,7 +332,7 @@
           newEdgeSource = currentTarget;
 
           newEdge = new Konva.Arrow({
-            id: "arrow-".concat(edgeNextID()),
+            id: "arrow-new",
             stroke: 'black'
           });
 
@@ -333,13 +366,7 @@
           newEdgeSource.draggable(true);
 
           if (currentTarget.id()[0] == "n") {
-            edges[newEdge.id()] = {
-              edge: newEdge,
-              source: newEdgeSource,
-              target: currentTarget
-            };
-            nodes[newEdgeSource.id()].edges.push(newEdge.id());
-            nodes[currentTarget.id()].edges.push(newEdge.id());
+            createEdge(edgeNextID(), newEdgeSource, currentTarget);
           } else {
             newEdge.destroy();
           }
