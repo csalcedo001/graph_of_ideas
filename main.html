@@ -44,40 +44,46 @@
       var nodes = {};
       var edges = {};
 
-      class Node {
-        constructor(id, x, y, text="") {
-          this.id = id;
-          this.edges = [];
-          this.group = new Konva.Group({
-            id: "node-".concat(id),
-            x: x - stage.x(),
-            y: y - stage.y(),
-            draggable: true
+      class Node extends Konva.Group {
+        constructor(obj) {
+          obj.draggable = true;
+
+          // Initialize Konva.Group parameters. Be careful, additional
+          // parameters of Node class could overlap those of the parent class.
+          super(obj);
+
+          this.x(this.x() - stage.x());
+          this.y(this.y() - stage.y());
+
+          // Assign node pointer to its id in nodes object
+          nodes[this.id()] = this;
+
+          // Create text object
+          this.text = new Konva.Text({
+            id: "text-".concat(this.id),
+            x: 0,
+            y: 0,
+            text: obj.text
           });
 
+          this.text.x(-this.text.width() / 2);
+          this.text.y(-this.text.height() / 2);
+
+          // Create circle object
           this.circle = new Konva.Circle({
-            id: "circle-".concat(id),
+            id: "circle-".concat(this.id),
             x: 0,
             y: 0,
             radius: 100,
             fill: "green"
           });
 
-          this.text = new Konva.Text({
-            id: "text-".concat(id),
-            x: 0,
-            y: 0
-          });
+          this.edges = [];
 
-          this.text.x(-this.text.width() / 2);
-          this.text.y(-this.text.height() / 2);
+          this.add(this.circle);
+          this.add(this.text);
 
-          this.group.add(this.circle);
-          this.group.add(this.text);
-
-          nodes[this.group.id()] = this;
-
-          this.group.on("dragmove", () => {
+          this.on("dragmove", () => {
             this.edges.forEach(edge => {
               var position = edgeTargetPosition(edge.source, edge.target);
 
@@ -87,39 +93,56 @@
             stage.draw();
           });
 
-          layer.add(this.group);
+          layer.add(this);
           layer.batchDraw();
         }
-      };
+        radius(length) {
+          if (length === undefined || length === null) {
+            return this.circle.radius();
+          }
 
-      class Edge {
-        constructor() {
-          var id = edgeNextID();
-
-          this.id = "edge-".concat(id);
-          this.source = newEdgeSource;
-          this.target = currentTarget;
-          this.arrow = newEdge;
-
-          this.arrow.id("arrow-".concat(id));
+          this.circle.radius(length);
         }
-        constructor(source, target) {
-          var id = edgeNextID();
+        text(message) {
+          if (message === undefined || message === null) {
+            return this.text.text();
+          }
 
-          this.id = "edge-".concat(id);
-          this.source = source;
-          this.target = target;
-
-          var position = edgeTargetPosition(source, target);
-
-          this.arrow = Konva.Arrow({
-            id: "arrow-".concat(id),
-            points: [source.x(), source.y(), position.x, position.y],
-            stroke: "black"
-          });
+          this.text.text(message);
+        }
+        addEdge(node) {
+          this.edges.push(node);
         }
       };
+
       
+
+      class Edge extends Konva.Arrow {
+        constructor(obj) {
+          super(obj);
+
+          var id = edgeNextID();
+
+          this.id("edge-".concat(id));
+          this.stroke("black");
+          this.source = obj.source;
+          this.target = obj.target;
+
+          this.source.addEdge(this);
+          this.target.addEdge(this);
+
+          var position = edgeTargetPosition(this.source, this.target);
+
+          this.points([this.source.x(), this.source.y(), position.x, position.y]);
+
+          layer.add(this);
+
+          this.moveToBottom();
+
+          layer.draw();
+        }
+      };
+
 
       function createNode(id, x, y, text="") {
           var newNode = new Konva.Group({
@@ -211,10 +234,18 @@
 
       $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
         data.nodes.forEach(nodeStruct => {
-          createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
+          new Node({
+            id: nodeStruct.id,
+            x: nodeStruct.x,
+            y: nodeStruct.y,
+            text: nodeStruct.text
+          });
         });
         data.edges.forEach(edgeStruct => {
-          createEdge(edgeNextID(), nodes["node-".concat(edgeStruct[0])].group, nodes["node-".concat(edgeStruct[1])].group)
+          new Edge({
+            source: nodes[edgeStruct[0]],
+            target: nodes[edgeStruct[1]]
+          });
         });
       });
 
@@ -260,13 +291,13 @@
       }
 
       function edgeTargetPosition(source, target) {
-        var xVector = target.group.x() - source.group.x();
-        var yVector = target.group.y() - source.group.y();
+        var xVector = target.x() - source.x();
+        var yVector = target.y() - source.y();
         var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
 
         return {
-          x: target.group.x() - target.circle.radius() * xVector / h,
-          y: target.group.y() - target.circle.radius() * yVector / h
+          x: target.x() - target.radius() * xVector / h,
+          y: target.y() - target.radius() * yVector / h
         };
       }
 
@@ -275,16 +306,16 @@
           postGraph({
             nodes: Object.values(nodes).map(function(node) {
               return {
-                id: node.id,
-                x: node.group.x(),
-                y: node.group.y(),
-                text: node.text.text()
+                id: node.id(),
+                x: node.x(),
+                y: node.y(),
+                text: node.text()
               };
             }),
             edges: Object.values(edges).map(function(edge) {
               return [
-                nodes[edge.source.id()].id,
-                nodes[edge.target.id()].id
+                edge.source.id(),
+                edge.target.id()
               ];
             })
           });
@@ -294,15 +325,20 @@
       stage.on("dblclick", function(e) {
         if (currentTarget.id() == "stage") {
           var position = stage.getPointerPosition();
-          var node = createNode(nodeNextID(), position.x, position.y);
-          new Node("999", 20, 20);
-        } else if (currentTarget.id()[0] == "n") {
-          var node = nodes[currentTarget.id()];
+
+          new Node({
+            id: nodeNextID(),
+            x: position.x,
+            y: position.y,
+            text: ""
+          })
+        }
+        else if (!isNaN(currentTarget.id()[0])) {
           // From this point until the end of the if block, code has been
           // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
-          var textNode = node.text;
+          var textNode = currentTarget.text;
 
-          node.text.hide();
+          textNode.hide();
           layer.batchDraw();
 
           // create textarea over canvas with absolute position
@@ -455,9 +491,8 @@
         document.getElementById('text').textContent = currentTarget.id();
       });
 
-
       stage.on("mousedown", function(e) {
-        if (currentTarget.id()[0] == "n" && window.event.metaKey) {
+        if (!isNaN(currentTarget.id()[0]) && window.event.metaKey) {
           if (newEdgeAnimation.isRunning()) {
             newEdgeAnimation.stop();
             newEdge.destroy();
@@ -473,8 +508,8 @@
           newEdgeAnimation = new Konva.Animation(function (frame) {
             var targetX, targetY;
 
-            if (currentTarget.id()[0] == "n" && currentTarget != newEdgeSource) {
-              var position = edgeTargetPosition(nodes[newEdgeSource.id()], nodes[currentTarget.id()]);
+            if (!isNaN(currentTarget.id()[0]) && currentTarget != newEdgeSource) {
+              var position = edgeTargetPosition(newEdgeSource, currentTarget);
 
               targetX = position.x;
               targetY = position.y;
@@ -499,11 +534,14 @@
           newEdgeAnimation.stop();
           newEdgeSource.draggable(true);
 
-          if (currentTarget.id()[0] == "n") {
-            createEdge(edgeNextID(), newEdgeSource, currentTarget);
-          } else {
-            newEdge.destroy();
+          if (!isNaN(currentTarget.id()[0])) {
+            new Edge({
+              source: newEdgeSource,
+              target: currentTarget
+            })
           }
+
+          newEdge.destroy();
 
           layer.batchDraw();
         }
