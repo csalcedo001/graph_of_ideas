@@ -132,7 +132,10 @@
         return edgeStruct;
       }
 
+      var nodeID;
+
       $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
+        nodeID = data.nodeCount;
         data.nodes.forEach(nodeStruct => {
           createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
         });
@@ -172,7 +175,6 @@
         });
       }
 
-      var nodeID = 100;
       function nodeNextID() {
         return (nodeID++).toString();
       }
@@ -196,6 +198,7 @@
       container.addEventListener("keydown", function(e) {
         if (window.event.ctrlKey && e.which == 83) {
           postGraph({
+            nodeCount: nodeID,
             nodes: Object.values(nodes).map(function(node) {
               return {
                 id: node.id,
