@@ -159,9 +159,9 @@
         .then(response => {
           return response.json();
         })
-        .then(response => {
-          if (error in response) {
-            window.alert(responde.message);
+        .then(json => {
+          if ("error" in json) {
+            window.alert(json.message);
           } else {
             window.alert("Saved!");
           }
@@ -194,7 +194,7 @@
       }
 
       container.addEventListener("keydown", function(e) {
-        if (window.event.metaKey && e.which == 83) {
+        if (window.event.ctrlKey && e.which == 83) {
           postGraph({
             nodes: Object.values(nodes).map(function(node) {
               return {
