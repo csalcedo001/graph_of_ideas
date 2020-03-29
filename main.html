@@ -30,7 +30,9 @@
         draggable: true
       });
 
-
+      var container = stage.container();
+      container.tabIndex = 1;
+      container.focus();
 
       var layer = new Konva.Layer({
         id: "layer"
@@ -69,6 +71,7 @@
           newText.y(-newText.height() / 2);
 
           var nodeStruct = {
+            id: id,
             group: newNode,
             circle: newCircle,
             text: newText,
@@ -113,6 +116,7 @@
         }
 
         edgeStruct = {
+          id: id,
           edge: newEdge,
           source: source,
           target: target
@@ -134,8 +138,39 @@
         });
         data.edges.forEach(edgeStruct => {
           createEdge(edgeNextID(), nodes["node-".concat(edgeStruct[0])].group, nodes["node-".concat(edgeStruct[1])].group)
-        })
+        });
       });
+
+      // async function getGraph() {
+      //   let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph");
+      //
+      //   if (response.ok) {
+      //     let json = await response.json();
+      //   } else {
+      //     window.alert("HTTP-Error: " + response.status);
+      //   }
+      // }
+
+      async function postGraph(data) {
+        let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/save", {
+          method: 'POST',
+          body: JSON.stringify(data)
+        })
+        .then(response => {
+          return response.json();
+        })
+        .then(response => {
+          if (error in response) {
+            window.alert(responde.message);
+          } else {
+            window.alert("Saved!");
+          }
+        })
+        .catch(function(err) {
+          window.alert("ERROR: Couldn't save work.");
+          window.alert(err);
+        });
+      }
 
       var nodeID = 100;
       function nodeNextID() {
@@ -158,10 +193,32 @@
         };
       }
 
+      container.addEventListener("keydown", function(e) {
+        if (window.event.metaKey && e.which == 83) {
+          postGraph({
+            nodes: Object.values(nodes).map(function(node) {
+              return {
+                id: node.id,
+                x: node.group.x(),
+                y: node.group.y(),
+                text: node.text.text()
+              };
+            }),
+            edges: Object.values(edges).map(function(edge) {
+              return [
+                nodes[edge.source.id()].id,
+                nodes[edge.target.id()].id
+              ];
+            })
+          });
+        }
+      });
+
       stage.on("dblclick", function(e) {
         if (currentTarget.id() == "stage") {
           var position = stage.getPointerPosition();
           var node = createNode(nodeNextID(), position.x, position.y);
+          new Node("999", 20, 20);
         } else if (currentTarget.id()[0] == "n") {
           var node = nodes[currentTarget.id()];
           // From this point until the end of the if block, code has been
