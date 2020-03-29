@@ -44,6 +44,83 @@
       var nodes = {};
       var edges = {};
 
+      class Node {
+        constructor(id, x, y, text="") {
+          this.id = id;
+          this.edges = [];
+          this.group = new Konva.Group({
+            id: "node-".concat(id),
+            x: x - stage.x(),
+            y: y - stage.y(),
+            draggable: true
+          });
+
+          this.circle = new Konva.Circle({
+            id: "circle-".concat(id),
+            x: 0,
+            y: 0,
+            radius: 100,
+            fill: "green"
+          });
+
+          this.text = new Konva.Text({
+            id: "text-".concat(id),
+            x: 0,
+            y: 0
+          });
+
+          this.text.x(-this.text.width() / 2);
+          this.text.y(-this.text.height() / 2);
+
+          this.group.add(this.circle);
+          this.group.add(this.text);
+
+          nodes[this.group.id()] = this;
+
+          this.group.on("dragmove", () => {
+            this.edges.forEach(edge => {
+              var position = edgeTargetPosition(edge.source, edge.target);
+
+              edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+            });
+
+            stage.draw();
+          });
+
+          layer.add(this.group);
+          layer.batchDraw();
+        }
+      };
+
+      class Edge {
+        constructor() {
+          var id = edgeNextID();
+
+          this.id = "edge-".concat(id);
+          this.source = newEdgeSource;
+          this.target = currentTarget;
+          this.arrow = newEdge;
+
+          this.arrow.id("arrow-".concat(id));
+        }
+        constructor(source, target) {
+          var id = edgeNextID();
+
+          this.id = "edge-".concat(id);
+          this.source = source;
+          this.target = target;
+
+          var position = edgeTargetPosition(source, target);
+
+          this.arrow = Konva.Arrow({
+            id: "arrow-".concat(id),
+            points: [source.x(), source.y(), position.x, position.y],
+            stroke: "black"
+          });
+        }
+      };
+      
+
       function createNode(id, x, y, text="") {
           var newNode = new Konva.Group({
             id: "node-".concat(id),
