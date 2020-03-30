@@ -59,15 +59,15 @@
           nodes[this.id()] = this;
 
           // Create text object
-          this.text = new Konva.Text({
+          this.text_ = new Konva.Text({
             id: "text-".concat(this.id),
             x: 0,
             y: 0,
             text: obj.text
           });
 
-          this.text.x(-this.text.width() / 2);
-          this.text.y(-this.text.height() / 2);
+          this.text_.x(-this.text_.width() / 2);
+          this.text_.y(-this.text_.height() / 2);
 
           // Create circle object
           this.circle = new Konva.Circle({
@@ -81,7 +81,7 @@
           this.edges = [];
 
           this.add(this.circle);
-          this.add(this.text);
+          this.add(this.text_);
 
           this.on("dragmove", () => {
             this.edges.forEach(edge => {
@@ -105,17 +105,17 @@
         }
         text(message) {
           if (message === undefined || message === null) {
-            return this.text.text();
+            return this.text_.text();
           }
 
-          this.text.text(message);
+          this.text_.text(message);
         }
         addEdge(node) {
           this.edges.push(node);
         }
       };
 
-      
+
 
       class Edge extends Konva.Arrow {
         constructor(obj) {
@@ -127,6 +127,8 @@
           this.stroke("black");
           this.source = obj.source;
           this.target = obj.target;
+
+          edges[this.id()] = this;
 
           this.source.addEdge(this);
           this.target.addEdge(this);
@@ -142,95 +144,6 @@
           layer.draw();
         }
       };
-
-
-      function createNode(id, x, y, text="") {
-          var newNode = new Konva.Group({
-            id: "node-".concat(id),
-            x: x - stage.x(),
-            y: y - stage.y(),
-            draggable: true
-          })
-
-          var newCircle = new Konva.Circle({
-            id: "circle-".concat(id),
-            radius: 100,
-            x: 0,
-            y: 0,
-            fill: 'green',
-          });
-
-          var newText = new Konva.Text({
-            id: "text-".concat(id),
-            x: 0,
-            y: 0,
-            text: text
-          });
-
-          newText.x(-newText.width() / 2);
-          newText.y(-newText.height() / 2);
-
-          var nodeStruct = {
-            id: id,
-            group: newNode,
-            circle: newCircle,
-            text: newText,
-            edges: []
-          };
-
-          nodes[newNode.id()] = nodeStruct;
-
-          newNode.add(newCircle);
-          newNode.add(newText);
-
-          newNode.on("dragmove", () => {
-            nodes[newNode.id()].edges.forEach(id => {
-              var edge = edges[id];
-              position = edgeTargetPosition(nodes[edge.source.id()], nodes[edge.target.id()]);
-
-              edge.edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-            });
-
-            stage.draw();
-          });
-
-          layer.add(newNode);
-          layer.batchDraw();
-
-          return nodeStruct;
-      }
-
-      function createEdge(id, source, target) {
-        id = "arrow-".concat(id);
-        if (newEdge === null) {
-          var position = edgeTargetPosition(nodes[source.id()], nodes[target.id()]);
-          newEdge = new Konva.Arrow({
-            id: id,
-            points: [source.x(), source.y(), position.x, position.y],
-            stroke: "black"
-          });
-          layer.add(newEdge);
-          newEdge.moveToBottom();
-        } else {
-          newEdge.id(id);
-        }
-
-        edgeStruct = {
-          id: id,
-          edge: newEdge,
-          source: source,
-          target: target
-        };
-        edges[id] = edgeStruct;
-
-        nodes[source.id()].edges.push(id);
-        nodes[target.id()].edges.push(id);
-        newEdge = null;
-
-        layer.batchDraw();
-
-        return edgeStruct;
-      }
 
       var nodeID;
 
@@ -339,7 +252,7 @@
         else if (!isNaN(currentTarget.id()[0])) {
           // From this point until the end of the if block, code has been
           // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
-          var textNode = currentTarget.text;
+          var textNode = currentTarget.text_;
 
           textNode.hide();
           layer.batchDraw();
