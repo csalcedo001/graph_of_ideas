@@ -60,7 +60,7 @@
 
           // Create text object
           this.text_ = new Konva.Text({
-            id: "text-".concat(this.id),
+            id: "text-".concat(this.id()),
             x: 0,
             y: 0,
             text: obj.text
@@ -71,7 +71,7 @@
 
           // Create circle object
           this.circle = new Konva.Circle({
-            id: "circle-".concat(this.id),
+            id: "circle-".concat(this.id()),
             x: 0,
             y: 0,
             radius: 100,
@@ -222,11 +222,10 @@
         // Convert rotation angle to radians
         var rotation = -target.rotation() * Math.PI / 180;
         var pxtmp = px;
-        var pytmp = py;
 
         // Rotate plane
-        px = pxtmp * Math.cos(rotation) - pytmp * Math.sin(rotation);
-        py = pxtmp * Math.sin(rotation) + pytmp * Math.cos(rotation);
+        px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+        py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
 
         // Rescale plane
         px /= target.scaleX();
@@ -245,10 +244,9 @@
         // Undo rotation
         rotation = -rotation;
         pxtmp = px;
-        pytmp = py;
 
-        px = pxtmp * Math.cos(rotation) - pytmp * Math.sin(rotation);
-        py = pxtmp * Math.sin(rotation) + pytmp * Math.cos(rotation);
+        px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+        py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
 
         // Return plane to original position
         return {
@@ -449,14 +447,22 @@
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
-        var id = e.target.id()[0];
+        var parent = e.target.getParent();
 
-        if (id == "c" || id == "t") {
-          currentTarget = e.target.getParent();
-        } else if (id == "T") {
-          currentTarget = e.target.node();
-        } else {
-          currenttarget = stage;
+        if (parent == undefined) {
+          currentTarget = stage;
+        }
+        else {
+          var id = parent.id()[0];
+          if (!isNaN(id)) {
+            currentTarget = parent;
+          }
+          else if (id == "T") {
+            currentTarget = parent.node();
+          }
+          else {
+            currentTarget = stage;
+          }
         }
 
         document.getElementById('text').textContent = currentTarget.id();
@@ -467,11 +473,12 @@
           currentSelection = currentTarget;
 
           // If current selection is a node or its transformer
-          if (!isNaN(currentSelection.id()[0]) || currentSelection.id()[1] == "r") {
+          if (!isNaN(currentSelection.id()[0])) {
+            selectionTransformer.moveToTop();
             selectionTransformer.visible(true);
             selectionTransformer.node(currentSelection);
           }
-          else {
+          else if (currentSelection.id() == "stage"){
             selectionTransformer.visible(false);
           }
         }
