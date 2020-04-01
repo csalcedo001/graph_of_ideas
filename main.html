@@ -215,13 +215,45 @@
       }
 
       function edgeTargetPosition(source, target) {
-        var xVector = target.x() - source.x();
-        var yVector = target.y() - source.y();
-        var h = Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2));
+        // Move center of plane to target
+        var px = source.x() - target.x();
+        var py = source.y() - target.y();
 
+        // Convert rotation angle to radians
+        var rotation = -target.rotation() * Math.PI / 180;
+        var pxtmp = px;
+        var pytmp = py;
+
+        // Rotate plane
+        px = pxtmp * Math.cos(rotation) - pytmp * Math.sin(rotation);
+        py = pxtmp * Math.sin(rotation) + pytmp * Math.cos(rotation);
+
+        // Rescale plane
+        px /= target.scaleX();
+        py /= target.scaleY();
+
+        // Find point in which circumference and line from source to target touch
+        var h = Math.sqrt(Math.pow(px, 2) + Math.pow(py, 2));
+
+        px *= target.radius() / h,
+        py *= target.radius() / h
+
+        // Undo rescale
+        px *= target.scaleX();
+        py *= target.scaleY();
+
+        // Undo rotation
+        rotation = -rotation;
+        pxtmp = px;
+        pytmp = py;
+
+        px = pxtmp * Math.cos(rotation) - pytmp * Math.sin(rotation);
+        py = pxtmp * Math.sin(rotation) + pytmp * Math.cos(rotation);
+
+        // Return plane to original position
         return {
-          x: target.x() - target.radius() * xVector / h,
-          y: target.y() - target.radius() * yVector / h
+          x: px + target.x(),
+          y: py + target.y()
         };
       }
 
