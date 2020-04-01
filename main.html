@@ -90,6 +90,16 @@
             stage.draw();
           });
 
+          this.on("transform", () => {
+            this.edges.forEach(edge => {
+              var position = edgeTargetPosition(edge.source, edge.target);
+
+              edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+            });
+
+            stage.draw();
+          });
+
           this.add(this.circle);
           this.add(this.text_);
           layer.add(this);
