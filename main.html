@@ -124,7 +124,7 @@
         addEdge(edge) {
           this.edges.push(edge);
         }
-        remove() {
+        destroy() {
           for (var i = 0; i < this.edges.length; i++) {
             var edge = this.edges[i];
             var node = edge.source == this ? edge.target : edge.source;
@@ -132,11 +132,16 @@
             var index = node.edges.indexOf(edge);
             node.edges.splice(index, 1);
 
-            this.edges[i].destroy();
+            delete edges[edge.id()];
+            edge.destroy();
           }
+
           this.circle.destroy();
           this.text_.destroy();
-          this.destroy();
+
+          delete nodes[this.id()];
+
+          super.destroy();
         }
       };
 
@@ -297,6 +302,12 @@
               ];
             })
           });
+        }
+        if (e.which == 8 && currentSelection != stage) {
+          // currentSelection.remove();
+          currentSelection.destroy();
+          selectionTransformer.visible(false);
+          layer.draw();
         }
       });
 
@@ -462,6 +473,17 @@
         visible: false
       });
 
+      // var arrowTest = new Konva.Arrow({
+      //   points: [100, 100, 800, 800],
+      //   stroke: "blue",
+      //   draggable: true
+      // });
+      // var tr = new Konva.Transformer({
+      //   node: arrowTest
+      // });
+      // layer.add(arrowTest);
+      // layer.add(tr);
+
       layer.add(selectionTransformer);
       selectionTransformer.moveToTop();
 
@@ -492,7 +514,6 @@
       });
 
       stage.on("mousedown", function(e) {
-        nodes["0"].remove();
         if (currentSelection != currentTarget) {
           currentSelection = currentTarget;
 
