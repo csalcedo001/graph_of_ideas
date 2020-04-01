@@ -78,11 +78,6 @@
             fill: "green"
           });
 
-          this.transformer_ = new Konva.Transformer({
-            id: "tranformer-".concat(this.id),
-            visible: false
-          })
-
           this.edges = [];
 
           this.on("dragmove", () => {
@@ -97,7 +92,6 @@
 
           this.add(this.circle);
           this.add(this.text_);
-          layer.add(this.transformer_);
           layer.add(this);
 
           layer.batchDraw();
@@ -118,16 +112,6 @@
         }
         addEdge(node) {
           this.edges.push(node);
-        }
-        selected(statement) {
-          if (statement) {
-            if (this.transformer_.node() === undefined) {
-              this.transformer_.node(this);
-            }
-            this.transformer_.visible(true);
-          } else {
-            this.transformer_.visible(false);
-          }
         }
       };
 
@@ -409,32 +393,44 @@
           newEdge = null,
           newEdgeSource;
       var currentTarget = stage;
-      var currentSelection = stage,
-          previousSelection = stage;
+      var currentSelection = stage;
+      var selectionTransformer = new Konva.Transformer({
+        id: "Transformer",
+        visible: false
+      });
+
+      layer.add(selectionTransformer);
+      selectionTransformer.moveToTop();
 
       stage.on("mousemove", function(e) {
         var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
-        currentTarget = e.target.id()[0] == "c" || e.target.id()[0] == "t" ?
-          e.target.getParent() :
-          stage;
+        var id = e.target.id()[0];
+
+        if (id == "c" || id == "t") {
+          currentTarget = e.target.getParent();
+        } else if (id == "T") {
+          currentTarget = e.target.node();
+        } else {
+          currenttarget = stage;
+        }
 
         document.getElementById('text').textContent = currentTarget.id();
       });
 
       stage.on("mousedown", function(e) {
         if (currentSelection != currentTarget) {
-          previousSelection = currentSelection;
           currentSelection = currentTarget;
 
           // If current selection is a node or its transformer
           if (!isNaN(currentSelection.id()[0]) || currentSelection.id()[1] == "r") {
-            currentSelection.selected(true);
+            selectionTransformer.visible(true);
+            selectionTransformer.node(currentSelection);
           }
-          if (previousSelection.id() != "stage") {
-            previousSelection.selected(false);
+          else {
+            selectionTransformer.visible(false);
           }
         }
 
@@ -484,7 +480,7 @@
             new Edge({
               source: newEdgeSource,
               target: currentTarget
-            })
+            });
           }
 
           newEdge.destroy();
