@@ -154,24 +154,31 @@
         }
       };
 
-      var nodeID;
+      var nodeID = 0;
+      var nodeMapping = {};
 
       $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
-        nodeID = data.nodeCount;
         data.nodes.forEach(nodeStruct => {
+          var id = nodeNextID();
+
+          nodeMapping[nodeStruct.id] = id;
+
           new Node({
-            id: nodeStruct.id,
+            id: id,
             x: nodeStruct.x,
             y: nodeStruct.y,
             text: nodeStruct.text
           });
         });
+
         data.edges.forEach(edgeStruct => {
           new Edge({
-            source: nodes[edgeStruct[0]],
-            target: nodes[edgeStruct[1]]
+            source: nodes[nodeMapping[edgeStruct[0]]],
+            target: nodes[nodeMapping[edgeStruct[1]]]
           });
         });
+        
+        nodeID = data.nodeCount;
       });
 
       // async function getGraph() {
