@@ -120,8 +120,23 @@
 
           this.text_.text(message);
         }
-        addEdge(node) {
-          this.edges.push(node);
+        // TODO: Rename: 'connect'
+        addEdge(edge) {
+          this.edges.push(edge);
+        }
+        remove() {
+          for (var i = 0; i < this.edges.length; i++) {
+            var edge = this.edges[i];
+            var node = edge.source == this ? edge.target : edge.source;
+
+            var index = node.edges.indexOf(edge);
+            node.edges.splice(index, 1);
+
+            this.edges[i].destroy();
+          }
+          this.circle.destroy();
+          this.text_.destroy();
+          this.destroy();
         }
       };
 
@@ -152,6 +167,7 @@
 
           layer.draw();
         }
+        // TODO: remove(node1, node2)
       };
 
       var nodeID = 0;
@@ -177,7 +193,7 @@
             target: nodes[nodeMapping[edgeStruct[1]]]
           });
         });
-        
+
         nodeID = data.nodeCount;
       });
 
@@ -476,6 +492,7 @@
       });
 
       stage.on("mousedown", function(e) {
+        nodes["0"].remove();
         if (currentSelection != currentTarget) {
           currentSelection = currentTarget;
 
