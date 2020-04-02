@@ -587,7 +587,7 @@
       // All the code for 'wheel' event was taken from Konva demos, code taken
       // from: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
 
-      var scaleBy = 1.018;
+      var scaleBy = 1.025;
 
       stage.on('wheel', e => {
         e.evt.preventDefault();
@@ -599,7 +599,7 @@
         };
 
         var newScale =
-          e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+          e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
         stage.scale({ x: newScale, y: newScale });
 
         var newPos = {
