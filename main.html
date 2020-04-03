@@ -30,37 +30,44 @@
         draggable: true
       });
 
+      // Let stage capture key events
       var container = stage.container();
       container.tabIndex = 1;
       container.focus();
 
+      // Layer for arrows, drawn below layer of nodes
       var arrowLayer = new Konva.Layer({
-        id: "layer-arrows"
+        id: "Layer-arrows"
       });
-      var layer = new Konva.Layer({
-        id: "layer"
+      var nodeLayer = new Konva.Layer({
+        id: "Layer-nodes"
       });
 
       stage.add(arrowLayer);
-      stage.add(layer);
+      stage.add(nodeLayer);
 
 
+      // Objects that map ids of nodes and edges to their objects
       var nodes = {};
+      // TODO: Check if edges is necessary, could be deleted
       var edges = {};
 
       class Node extends Konva.Group {
         constructor(obj) {
+          /**
+            Arguments:
+            obj -- Initialization object for parent class, circle and text.
+          **/
+
+          var id = nodeNextID();
+
+          // Set constant parameters
+          obj.id = id;
           obj.draggable = true;
+          obj.x = obj.x - stage.x();
+          obj.y = obj.y - stage.y();
 
-          // Initialize Konva.Group parameters. Be careful, additional
-          // parameters of Node class could overlap those of the parent class.
           super(obj);
-
-          this.x(this.x() - stage.x());
-          this.y(this.y() - stage.y());
-
-          // Assign node pointer to its id in nodes object
-          nodes[this.id()] = this;
 
           // Create text object
           this.text_ = new Konva.Text({
@@ -70,6 +77,7 @@
             text: obj.text
           });
 
+          // Put text to middle of circle
           this.text_.x(-this.text_.width() / 2);
           this.text_.y(-this.text_.height() / 2);
 
@@ -84,6 +92,7 @@
 
           this.edges = [];
 
+          // Re-draw edges when dragged
           this.on("dragmove", () => {
             this.edges.forEach(edge => {
               var position = edgeTargetPosition(edge.source, edge.target);
@@ -92,9 +101,10 @@
               edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
-            stage.draw();
+            arrowLayer.draw();
           });
 
+          // Re-draw edges when transformed
           this.on("transform", () => {
             this.edges.forEach(edge => {
               var position = edgeTargetPosition(edge.source, edge.target);
@@ -103,42 +113,84 @@
               edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
-            stage.draw();
+            arrowLayer.draw();
           });
 
+          // Add circle and text to node, and node to the node layer.
           this.add(this.circle);
           this.add(this.text_);
-          layer.add(this);
+          nodeLayer.add(this);
 
-          this.zIndex(3);
+          nodeLayer.batchDraw();
 
-          layer.batchDraw();
+          // Assign node pointer to its id in nodes object
+          nodes[this.id()] = this;
         }
-        radius(length) {
-          if (length === undefined || length === null) {
+        radius(radius) {
+          /**
+            Getter and Setter of node radius.
+
+            Arguments:
+            radius -- New radius to set. If undefined, method is getter.
+
+            Returns:
+            If radius is undefined, returns radius of circle. If not, returns
+            Node object with updated radius.
+          **/
+          if (radius === undefined || radius === null) {
             return this.circle.radius();
           }
+          else {
+            this.circle.radius(radius);
 
-          this.circle.radius(length);
+            return this;
+          }
         }
-        text(message) {
-          if (message === undefined || message === null) {
+        text(text) {
+          /**
+            Getter and Setter of node text.
+
+            Arguments:
+            text -- New text to set. If undefined, method is getter.
+
+            Returns:
+            If text is undefined, returns text of node. If not, returns
+            Node object with updated text.
+          **/
+
+          if (text === undefined || text === null) {
             return this.text_.text();
           }
+          else {
+            this.text_,text(text);
 
-          this.text_.text(message);
+            return this;
+          }
         }
-        // TODO: Rename: 'connect'
-        addEdge(edge) {
+        connect(edge) {
+          /**
+            Connects node with an edge.
+
+            Arguments:
+            edge -- Edge object to connect with node.
+          **/
+
           this.edges.push(edge);
         }
         destroy() {
+          /**
+            Destroy node, circle, text and neighbor edges.
+          **/
+
+          // Destroy edges
           this.edges.forEach(edge => {
             edge.destroy(edge.source == this ? edge.target : edge.source);
           });
 
+          // Remove node from object of nodes
           delete nodes[this.id()];
 
+          // Destroy remaining objects
           this.circle.destroy();
           this.text_.destroy();
 
@@ -152,8 +204,16 @@
 
 
       class Edge extends Konva.Line {
+        // TODO: Accept arrow attribute
         constructor(obj) {
+          /**
+            Arguments:
+            obj -- Initialization object for parent class and arrow.
+          **/
+
           var id = edgeNextID();
+
+          // Set constant parameters
 
           obj.id = "edge-".concat(id);
           obj.strokeWidth = 18
@@ -162,16 +222,19 @@
 
           super(obj);
 
+          // Define and connect source and target nodes
           this.source = obj.source;
           this.target = obj.target;
 
-          this.source.addEdge(this);
-          this.target.addEdge(this);
+          this.source.connect(this);
+          this.target.connect(this);
 
+          // Find tagrget position for arrow
           var position = edgeTargetPosition(this.source, this.target);
 
           this.points([this.source.x(), this.source.y(), position.x, position.y]);
 
+          // Create arrow object
           this.arrow = new Konva.Arrow({
             id: "arrow-".concat(id),
             points: this.points(),
@@ -179,20 +242,30 @@
             stroke: "black"
           });
 
+          // Add edge and arrow objects to arrow layer
           arrowLayer.add(this.arrow);
           arrowLayer.add(this);
 
+          // Hide arrow behind touch area
           this.arrow.moveToBottom();
 
           arrowLayer.draw();
 
+          // Assign edge pointer to its id in nodes object
           edges[this.id()] = this;
         }
         destroy(target) {
-          // target -- Node in which edge must be deleted. If undefined, both.
+          /**
+            Destroy node, circle, text and neighbor edges.
+
+            Arguments:
+            target -- Node from which edge must be deleted. If undefined,
+                      destroy from both nodes.
+          **/
+
           var index;
 
-          // target = undefined loops through both edge lists.
+          // Remove edge from edge lists of nodes
           if (target != this.target) {
             index = this.source.edges.indexOf(this);
             this.source.edges.splice(index, 1);
@@ -202,36 +275,42 @@
             this.target.edges.splice(index, 1);
           }
 
+          // Remove edge from object of edges
           delete edges[this.id()];
 
+          // Destroy objects
           this.arrow.destroy();
 
           super.destroy();
         }
       };
 
-      var nodeID = 0;
+      // Mapping from node id's in serve to assigned id's in session
       var nodeMapping = {};
 
       async function getGraph() {
+        /**
+          Get graph nodes and edges.
+        **/
+
         let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph");
 
         if (response.ok) {
+          // Get json if valid response
           let data = await response.json();
 
+          // Map each node in server with new id of session
           data.nodes.forEach(nodeStruct => {
-            var id = nodeNextID();
-
-            nodeMapping[nodeStruct.id] = id;
-
-            new Node({
-              id: id,
+            var node = new Node({
               x: nodeStruct.x,
               y: nodeStruct.y,
               text: nodeStruct.text
             });
+
+            nodeMapping[nodeStruct.id] = node.id();
           });
 
+          // Create new edge with mapped ids
           data.edges.forEach(edgeStruct => {
             new Edge({
               source: nodes[nodeMapping[edgeStruct[0]]],
@@ -239,17 +318,24 @@
             });
           });
 
-          nodeID = data.nodeCount;
-
           stage.draw();
         } else {
+          // Error message
           window.alert("HTTP-Error: " + response.status);
         }
       }
 
-      getGraph();
-
       async function postGraph(data) {
+        /**
+          Post updated graph nodes and edges.
+
+          Arguments:
+          data -- Object that holds nodes, edges and nodeCount keys.
+            nodes -- List of objects of attributes id, x, y and text.
+            edges -- List of lists, pirs of source and target id's respectively.
+            nodeCount -- Next id that won't conflict with previous id's.
+        **/
+
         let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/save", {
           method: 'POST',
           body: JSON.stringify(data)
@@ -259,27 +345,56 @@
         })
         .then(json => {
           if ("error" in json) {
+            // Invalid data object format
             window.alert(json.message);
-          } else {
+          }
+          else {
             window.alert("Saved!");
           }
         })
         .catch(function(err) {
+          // Unable to fetch
           window.alert("ERROR: Couldn't save work.");
           window.alert(err);
         });
       }
 
+      getGraph();
+
+      // TODO: If multithreading is available, this function should be atomic
+      var nodeID = 0;
       function nodeNextID() {
+        /**
+          Get id of next node.
+        **/
+
         return (nodeID++).toString();
       }
 
+      // TODO: Check if edges need ids. If not, delete this function
       var edgeID = 0;
       function edgeNextID() {
+        /**
+          Get id of next edge.
+        **/
+
         return (edgeID++).toString();
       }
 
       function edgeTargetPosition(source, target) {
+        /**
+          Find point of arrow head given the source and target nodes.
+
+          Arguments:
+          source -- Node from which the arrow is drawn.
+          target -- Node where the arrow points.
+
+          Returns:
+          -- Object of attributes x and y.
+            x -- Number of x coordinate of arrow head.
+            y -- Number of y coordinate of arrow head.
+        **/
+
         // Move center of plane to target
         var px = source.x() - target.x();
         var py = source.y() - target.y();
@@ -321,6 +436,7 @@
       }
 
       container.addEventListener("keydown", function(e) {
+        // Ctrl + S: Save graph
         if (window.event.ctrlKey && e.which == 83) {
           postGraph({
             nodeCount: nodeID,
@@ -340,6 +456,7 @@
             })
           });
         }
+        // Return: Delete selected object
         if (e.which == 8 && currentSelection != stage) {
           currentSelection.destroy();
           selectionTransformer.visible(false);
@@ -348,23 +465,24 @@
       });
 
       stage.on("dblclick", function(e) {
+        // Double click stage: Create node
         if (currentTarget.id() == "stage") {
           var position = stage.getPointerPosition();
 
           new Node({
-            id: nodeNextID(),
             x: position.x,
             y: position.y,
             text: ""
           });
         }
+        // Double click node: Text edition
         else if (!isNaN(currentTarget.id()[0])) {
           // From this point until the end of the if block, code has been
           // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
           var textNode = currentTarget.text_;
 
           textNode.hide();
-          layer.batchDraw();
+          nodeLayer.batchDraw();
 
           // create textarea over canvas with absolute position
           // first we need to find position for textarea
@@ -438,7 +556,7 @@
             textarea.parentNode.removeChild(textarea);
             window.removeEventListener('click', handleOutsideClick);
             textNode.show();
-            layer.draw();
+            nodeLayer.draw();
           }
 
           function setTextareaWidth(newWidth) {
@@ -498,24 +616,37 @@
       });
 
 
+      // Mouse position
       var mouseX, mouseY;
+
+      // Dragged new edge animation
       var newEdgeAnimation = new Konva.Animation(function(frame){}),
           newEdge = null,
           newEdgeSource;
+
+      // TODO: Rename to mouseObject
+      // Object currently under the mouse
       var currentTarget = stage;
+
+      // TODO: Rename to selectedObject
+      // Object clicked
       var currentSelection = stage;
+
+      // Transformer of selected nodes
       var selectionTransformer = new Konva.Transformer({
         id: "Transformer",
         visible: false
       });
 
-      layer.add(selectionTransformer);
+      nodeLayer.add(selectionTransformer);
 
       stage.on("mousemove", function(e) {
+        // Update mouse position
         var position = stage.getPointerPosition();
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
+        // Set previous target opacity to 0 if its an edge and its not selected
         if (currentTarget.id()[0] == "e" && currentTarget != currentSelection) {
           currentTarget.opacity(0);
         }
@@ -523,17 +654,22 @@
         var parent = e.target.getParent();
 
         if (parent == undefined) {
+          // Only the stage lacks a parent
           currentTarget = stage;
         }
         else {
           var id = parent.id()[0];
+
           if (!isNaN(id)) {
+            // Node
             currentTarget = parent;
           }
           else if (id == "T") {
+            // Node transformer
             currentTarget = parent.node();
           }
           else if (e.target.id()[0] == "e") {
+            // Edge
             currentTarget = e.target;
 
             if (currentTarget != currentSelection) {
@@ -552,60 +688,77 @@
 
       stage.on("mousedown", function(e) {
         if (currentSelection != currentTarget) {
+          // Make previous selected edge invisible
           if (currentSelection.id()[0] == "e") {
             currentSelection.opacity(0);
           }
 
           currentSelection = currentTarget;
 
-          // If current selection is a node or its transformer
           if (!isNaN(currentSelection.id()[0])) {
+            // Left click node: Show transformer
+
             selectionTransformer.moveToTop();
             selectionTransformer.visible(true);
             selectionTransformer.node(currentSelection);
           }
           else if (currentSelection.id()[0] == "e") {
+            // Left click edge: Show selection area
+
             selectionTransformer.visible(false);
             currentSelection.opacity(0.4);
           }
           else if (currentSelection.id() == "stage"){
+            // Left click stage: Hide transformer
+
             selectionTransformer.visible(false);
           }
         }
 
         if (!isNaN(currentTarget.id()[0]) && window.event.metaKey) {
+          // Command + Left click node: Start arrow dragging animation
+
+          // Stop any possibly running animations
           if (newEdgeAnimation.isRunning()) {
             newEdgeAnimation.stop();
             newEdge.destroy();
           }
 
+          // Prevent node from being dragged with arrow
           newEdgeSource = currentSelection;
+          newEdgeSource.draggable(false);
 
+          // Create arrow object
           newEdge = new Konva.Arrow({
             id: "Arrow",
             stroke: 'black',
             strokeWidth: 4
           });
 
+          // Create animation that sets arrow position to mouse position
+          // OPTIMIZE: Use only one animation
           newEdgeAnimation = new Konva.Animation(function (frame) {
             var targetX, targetY;
 
             if (!isNaN(currentTarget.id()[0]) && currentTarget != newEdgeSource) {
+              // Assign arrow head position to node border
+
               var position = edgeTargetPosition(newEdgeSource, currentTarget);
 
               targetX = position.x;
               targetY = position.y;
             } else {
+              // Assign arrow head position to mouse
+
               targetX = mouseX;
               targetY = mouseY;
             }
 
             newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
-          }, layer);
+          }, nodeLayer);
 
-          layer.add(newEdge);
+          nodeLayer.add(newEdge);
           newEdge.moveToBottom();
-          newEdgeSource.draggable(false);
 
           newEdgeAnimation.start();
         }
@@ -616,6 +769,7 @@
           newEdgeAnimation.stop();
           newEdgeSource.draggable(true);
 
+          // Arrow dragging released over node: Create edge
           if (!isNaN(currentTarget.id()[0])) {
             new Edge({
               source: newEdgeSource,
@@ -625,7 +779,7 @@
 
           newEdge.destroy();
 
-          layer.batchDraw();
+          nodeLayer.batchDraw();
         }
       });
 
