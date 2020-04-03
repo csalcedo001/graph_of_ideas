@@ -135,21 +135,18 @@
           this.edges.push(edge);
         }
         destroy() {
-          for (var i = 0; i < this.edges.length; i++) {
+          var len = this.edges.length;
+
+          for (var i = len - 1; i >= 0; i--) {
             var edge = this.edges[i];
-            var node = edge.source == this ? edge.target : edge.source;
 
-            var index = node.edges.indexOf(edge);
-            node.edges.splice(index, 1);
-
-            delete edges[edge.id()];
             edge.destroy();
           }
 
+          delete nodes[this.id()];
+
           this.circle.destroy();
           this.text_.destroy();
-
-          delete nodes[this.id()];
 
           super.destroy();
         }
@@ -197,7 +194,21 @@
 
           edges[this.id()] = this;
         }
-        // TODO: remove(node1, node2)
+        // OPTIMIZE: Avoid searching through both lists when called from
+        // node.destroy
+        destroy() {
+          var index = this.source.edges.indexOf(this);
+          this.source.edges.splice(index, 1);
+
+          index = this.target.edges.indexOf(this);
+          this.target.edges.splice(index, 1);
+
+          delete edges[this.id()];
+
+          this.arrow.destroy();
+
+          super.destroy();
+        }
       };
 
       var nodeID = 0;
@@ -333,7 +344,7 @@
         if (e.which == 8 && currentSelection != stage) {
           currentSelection.destroy();
           selectionTransformer.visible(false);
-          layer.draw();
+          stage.draw();
         }
       });
 
