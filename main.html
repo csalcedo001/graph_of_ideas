@@ -492,8 +492,7 @@
       var newEdgeAnimation = new Konva.Animation(function(frame){}),
           newEdge = null,
           newEdgeSource;
-      var currentTarget = stage,
-          previousTarget = stage;
+      var currentTarget = stage;
       var currentSelection = stage;
       var selectionTransformer = new Konva.Transformer({
         id: "Transformer",
@@ -509,7 +508,9 @@
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
-        previousTarget = currentTarget;
+        if (currentTarget.id()[0] == "e" && currentTarget != currentSelection) {
+          currentTarget.opacity(0);
+        }
 
         var parent = e.target.getParent();
 
@@ -526,16 +527,16 @@
           }
           else if (e.target.id()[0] == "e") {
             currentTarget = e.target;
-            currentTarget.opacity(0.2);
+
+            if (currentTarget != currentSelection) {
+              currentTarget.opacity(0.2);
+            }
           }
           else {
             currentTarget = stage;
           }
         }
 
-        if (previousTarget != currentTarget && previousTarget.id()[0] == "e") {
-          previousTarget.opacity(0);
-        }
         arrowLayer.batchDraw();
 
         document.getElementById('text').textContent = currentTarget.id();
@@ -543,6 +544,10 @@
 
       stage.on("mousedown", function(e) {
         if (currentSelection != currentTarget) {
+          if (currentSelection.id()[0] == "e") {
+            currentSelection.opacity(0);
+          }
+
           currentSelection = currentTarget;
 
           // If current selection is a node or its transformer
@@ -550,6 +555,10 @@
             selectionTransformer.moveToTop();
             selectionTransformer.visible(true);
             selectionTransformer.node(currentSelection);
+          }
+          else if (currentSelection.id()[0] == "e") {
+            selectionTransformer.visible(false);
+            currentSelection.opacity(0.4);
           }
           else if (currentSelection.id() == "stage"){
             selectionTransformer.visible(false);
