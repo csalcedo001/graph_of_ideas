@@ -182,7 +182,7 @@
           this.points([this.source.x(), this.source.y(), position.x, position.y]);
 
           this.arrow = new Konva.Arrow({
-            id: "rect-".concat(id),
+            id: "arrow-".concat(id),
             points: this.points(),
             strokeWidth: 4,
             stroke: "black"
@@ -191,7 +191,9 @@
           arrowLayer.add(this.arrow);
           arrowLayer.add(this);
 
-          layer.draw();
+          this.arrow.moveToBottom();
+
+          arrowLayer.draw();
 
           edges[this.id()] = this;
         }
@@ -552,8 +554,8 @@
 
           newEdge = new Konva.Arrow({
             id: "arrow-new",
-            stroke: 'black'
-            // zIndex: 1
+            stroke: 'black',
+            strokeWidth: 4
           });
 
           newEdgeAnimation = new Konva.Animation(function (frame) {
@@ -573,7 +575,7 @@
           }, layer);
 
           layer.add(newEdge);
-          // newEdge.moveToBottom();
+          newEdge.moveToBottom();
           newEdge.zIndex(1);
           newEdgeSource.draggable(false);
 
