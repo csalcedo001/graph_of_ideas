@@ -85,6 +85,7 @@
               var position = edgeTargetPosition(edge.source, edge.target);
 
               edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.area.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
             stage.draw();
@@ -95,6 +96,7 @@
               var position = edgeTargetPosition(edge.source, edge.target);
 
               edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.area.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
             stage.draw();
@@ -143,6 +145,10 @@
 
           super.destroy();
         }
+        alpha(a) {
+          super.alpha(a);
+          this.circle.alpha(a);
+        }
       };
 
 
@@ -167,12 +173,26 @@
 
           this.points([this.source.x(), this.source.y(), position.x, position.y]);
 
+          this.area = new Konva.Line({
+            id: "rect-".concat(id),
+            points: this.points(),
+            strokeWidth: this.pointerWidth() + 2 * this.strokeWidth(),
+            stroke: "red",
+            opacity: 0.2
+          });
+
           layer.add(this);
+          layer.add(this.area);
 
           this.moveToBottom();
+          this.area.moveToBottom();
 
           layer.draw();
         }
+        // points(p) {
+        //   super.points(p);
+        //   this.area.points(p);
+        // }
         // TODO: remove(node1, node2)
       };
 
@@ -305,7 +325,6 @@
           });
         }
         if (e.which == 8 && currentSelection != stage) {
-          // currentSelection.remove();
           currentSelection.destroy();
           selectionTransformer.visible(false);
           layer.draw();
@@ -474,17 +493,6 @@
         visible: false
       });
 
-      // var arrowTest = new Konva.Arrow({
-      //   points: [100, 100, 800, 800],
-      //   stroke: "blue",
-      //   draggable: true
-      // });
-      // var tr = new Konva.Transformer({
-      //   node: arrowTest
-      // });
-      // layer.add(arrowTest);
-      // layer.add(tr);
-
       layer.add(selectionTransformer);
       selectionTransformer.moveToTop();
 
@@ -511,7 +519,7 @@
           }
         }
 
-        document.getElementById('text').textContent = currentTarget.id();
+        document.getElementById('text').textContent = e.target.id();
       });
 
       stage.on("mousedown", function(e) {
