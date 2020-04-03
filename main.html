@@ -135,13 +135,9 @@
           this.edges.push(edge);
         }
         destroy() {
-          var len = this.edges.length;
-
-          for (var i = len - 1; i >= 0; i--) {
-            var edge = this.edges[i];
-
-            edge.destroy();
-          }
+          this.edges.forEach(edge => {
+            edge.destroy(edge.source == this ? edge.target : edge.source);
+          });
 
           delete nodes[this.id()];
 
@@ -194,14 +190,19 @@
 
           edges[this.id()] = this;
         }
-        // OPTIMIZE: Avoid searching through both lists when called from
-        // node.destroy
-        destroy() {
-          var index = this.source.edges.indexOf(this);
-          this.source.edges.splice(index, 1);
+        destroy(target) {
+          // target -- Node in which edge must be deleted. If undefined, both.
+          var index;
 
-          index = this.target.edges.indexOf(this);
-          this.target.edges.splice(index, 1);
+          // target = undefined loops through both edge lists.
+          if (target != this.target) {
+            index = this.source.edges.indexOf(this);
+            this.source.edges.splice(index, 1);
+          }
+          if (target != this.source) {
+            index = this.target.edges.indexOf(this);
+            this.target.edges.splice(index, 1);
+          }
 
           delete edges[this.id()];
 
