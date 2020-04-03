@@ -166,8 +166,8 @@
 
           obj.id = "edge-".concat(id);
           obj.strokeWidth = 18
-          obj.opacity = 0.2;
-          obj.stroke = "red",
+          obj.opacity = 0;
+          obj.stroke = "#69F",
 
           super(obj);
 
@@ -492,7 +492,8 @@
       var newEdgeAnimation = new Konva.Animation(function(frame){}),
           newEdge = null,
           newEdgeSource;
-      var currentTarget = stage;
+      var currentTarget = stage,
+          previousTarget = stage;
       var currentSelection = stage;
       var selectionTransformer = new Konva.Transformer({
         id: "Transformer",
@@ -508,6 +509,8 @@
         mouseX = position.x - stage.x();
         mouseY = position.y - stage.y();
 
+        previousTarget = currentTarget;
+
         var parent = e.target.getParent();
 
         if (parent == undefined) {
@@ -521,12 +524,21 @@
           else if (id == "T") {
             currentTarget = parent.node();
           }
+          else if (e.target.id()[0] == "e") {
+            currentTarget = e.target;
+            currentTarget.opacity(0.2);
+          }
           else {
             currentTarget = stage;
           }
         }
 
-        document.getElementById('text').textContent = e.target.zIndex();
+        if (previousTarget != currentTarget && previousTarget.id()[0] == "e") {
+          previousTarget.opacity(0);
+        }
+        arrowLayer.batchDraw();
+
+        document.getElementById('text').textContent = currentTarget.id();
       });
 
       stage.on("mousedown", function(e) {
@@ -553,7 +565,7 @@
           newEdgeSource = currentSelection;
 
           newEdge = new Konva.Arrow({
-            id: "arrow-new",
+            id: "Arrow",
             stroke: 'black',
             strokeWidth: 4
           });
