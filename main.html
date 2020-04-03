@@ -34,10 +34,14 @@
       container.tabIndex = 1;
       container.focus();
 
+      var arrowLayer = new Konva.Layer({
+        id: "layer-arrows"
+      });
       var layer = new Konva.Layer({
         id: "layer"
       });
 
+      stage.add(arrowLayer);
       stage.add(layer);
 
 
@@ -85,7 +89,7 @@
               var position = edgeTargetPosition(edge.source, edge.target);
 
               edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-              edge.area.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
             stage.draw();
@@ -96,7 +100,7 @@
               var position = edgeTargetPosition(edge.source, edge.target);
 
               edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-              edge.area.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
             });
 
             stage.draw();
@@ -105,6 +109,10 @@
           this.add(this.circle);
           this.add(this.text_);
           layer.add(this);
+
+          this.zIndex(3);
+          // this.circle.zIndex(4);
+          // this.text.zIndex(5);
 
           layer.batchDraw();
         }
@@ -152,19 +160,19 @@
       };
 
 
-      class Edge extends Konva.Arrow {
+      class Edge extends Konva.Line {
         constructor(obj) {
-          obj.strokeWidth = 4;
-          super(obj);
-
           var id = edgeNextID();
 
-          this.id("edge-".concat(id));
-          this.stroke("black");
+          obj.id = "edge-".concat(id);
+          obj.strokeWidth = 18
+          obj.opacity = 0.2;
+          obj.stroke = "red",
+
+          super(obj);
+
           this.source = obj.source;
           this.target = obj.target;
-
-          edges[this.id()] = this;
 
           this.source.addEdge(this);
           this.target.addEdge(this);
@@ -173,26 +181,20 @@
 
           this.points([this.source.x(), this.source.y(), position.x, position.y]);
 
-          this.area = new Konva.Line({
+          this.arrow = new Konva.Arrow({
             id: "rect-".concat(id),
             points: this.points(),
-            strokeWidth: this.pointerWidth() + 2 * this.strokeWidth(),
-            stroke: "red",
-            opacity: 0.2
+            strokeWidth: 4,
+            stroke: "black"
           });
 
-          layer.add(this);
-          layer.add(this.area);
-
-          this.moveToBottom();
-          this.area.moveToBottom();
+          arrowLayer.add(this.arrow);
+          arrowLayer.add(this);
 
           layer.draw();
+
+          edges[this.id()] = this;
         }
-        // points(p) {
-        //   super.points(p);
-        //   this.area.points(p);
-        // }
         // TODO: remove(node1, node2)
       };
 
@@ -221,6 +223,8 @@
         });
 
         nodeID = data.nodeCount;
+
+        stage.draw();
       });
 
       // async function getGraph() {
@@ -491,10 +495,11 @@
       var selectionTransformer = new Konva.Transformer({
         id: "Transformer",
         visible: false
+        // zIndex: 6
       });
 
       layer.add(selectionTransformer);
-      selectionTransformer.moveToTop();
+      // selectionTransformer.moveToTop();
 
       stage.on("mousemove", function(e) {
         var position = stage.getPointerPosition();
@@ -519,7 +524,7 @@
           }
         }
 
-        document.getElementById('text').textContent = e.target.id();
+        document.getElementById('text').textContent = e.target.zIndex();
       });
 
       stage.on("mousedown", function(e) {
@@ -548,6 +553,7 @@
           newEdge = new Konva.Arrow({
             id: "arrow-new",
             stroke: 'black'
+            // zIndex: 1
           });
 
           newEdgeAnimation = new Konva.Animation(function (frame) {
@@ -567,7 +573,8 @@
           }, layer);
 
           layer.add(newEdge);
-          newEdge.moveToBottom();
+          // newEdge.moveToBottom();
+          newEdge.zIndex(1);
           newEdgeSource.draggable(false);
 
           newEdgeAnimation.start();
