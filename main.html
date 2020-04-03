@@ -111,8 +111,6 @@
           layer.add(this);
 
           this.zIndex(3);
-          // this.circle.zIndex(4);
-          // this.text.zIndex(5);
 
           layer.batchDraw();
         }
@@ -509,11 +507,9 @@
       var selectionTransformer = new Konva.Transformer({
         id: "Transformer",
         visible: false
-        // zIndex: 6
       });
 
       layer.add(selectionTransformer);
-      // selectionTransformer.moveToTop();
 
       stage.on("mousemove", function(e) {
         var position = stage.getPointerPosition();
@@ -662,51 +658,6 @@
         stage.position(newPos);
         stage.batchDraw();
       });
-      // var text = new Konva.Text({
-      //   text: 'Hola',
-      //   x: 100,
-      //   y: 100
-      // })
-
-      // layer.add(text);
-
-      // var tr = new Konva.Transformer({
-      //   node: circle,
-      //   enabledAnchors: ['top-center', 'bottom-center', 'middle-left', 'middle-right'],
-      //   visible: false,
-      //   // set minimum width of text
-      //   boundBoxFunc: function(oldBox, newBox) {
-      //     newBox.width = Math.max(30, newBox.width);
-      //     newBox.height = Math.max(30, newBox.height);
-      //     return newBox;
-      //   }
-      // });
-
-      // layer.add(tr);
-
-      // circle.on('dragmove', function() {
-      //   text.x(circle.x());
-      //   text.y(circle.y());
-      // });
-
-      // circle.on('click', function() {
-      //   tr.visible(true);
-      // });
-
-      // circle.on('transform', function() {
-      //   circle.setAttrs({
-      //     width: circle.width() * circle.scaleX(),
-      //     height: circle.height() * circle.scaleY(),
-      //     scaleX: 1,
-      //     scaleY: 1
-      //   });
-
-      //   text.x(circle.x());
-      //   text.y(circle.y());
-      //   text.rotation(circle.rotation());
-      // });
-
-      // layer.batchDraw();
     </script>
   </body>
 </html>
