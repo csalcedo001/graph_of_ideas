@@ -215,41 +215,25 @@
       var nodeID = 0;
       var nodeMapping = {};
 
-      $.getJSON("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", function(data) {
-        data.nodes.forEach(nodeStruct => {
-          var id = nodeNextID();
+      async function getGraph() {
+        let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph");
 
-          nodeMapping[nodeStruct.id] = id;
+        if (response.ok) {
+          let data = await response.json();
 
-          new Node({
-            id: id,
-            x: nodeStruct.x,
-            y: nodeStruct.y,
-            text: nodeStruct.text
+          nodeID = data.nodeCount;
+          data.nodes.forEach(nodeStruct => {
+            createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
           });
-        });
-
-        data.edges.forEach(edgeStruct => {
-          new Edge({
-            source: nodes[nodeMapping[edgeStruct[0]]],
-            target: nodes[nodeMapping[edgeStruct[1]]]
+          data.edges.forEach(edgeStruct => {
+            createEdge(edgeNextID(), nodes["node-".concat(edgeStruct[0])].group, nodes["node-".concat(edgeStruct[1])].group)
           });
-        });
+        } else {
+          window.alert("HTTP-Error: " + response.status);
+        }
+      }
 
-        nodeID = data.nodeCount;
-
-        stage.draw();
-      });
-
-      // async function getGraph() {
-      //   let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph");
-      //
-      //   if (response.ok) {
-      //     let json = await response.json();
-      //   } else {
-      //     window.alert("HTTP-Error: " + response.status);
-      //   }
-      // }
+      getGraph();
 
       async function postGraph(data) {
         let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/save", {
