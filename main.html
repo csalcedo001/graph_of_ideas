@@ -221,13 +221,29 @@
         if (response.ok) {
           let data = await response.json();
 
-          nodeID = data.nodeCount;
           data.nodes.forEach(nodeStruct => {
-            createNode(nodeStruct.id, nodeStruct.x, nodeStruct.y, nodeStruct.text);
+            var id = nodeNextID();
+
+            nodeMapping[nodeStruct.id] = id;
+
+            new Node({
+              id: id,
+              x: nodeStruct.x,
+              y: nodeStruct.y,
+              text: nodeStruct.text
+            });
           });
+
           data.edges.forEach(edgeStruct => {
-            createEdge(edgeNextID(), nodes["node-".concat(edgeStruct[0])].group, nodes["node-".concat(edgeStruct[1])].group)
+            new Edge({
+              source: nodes[nodeMapping[edgeStruct[0]]],
+              target: nodes[nodeMapping[edgeStruct[1]]]
+            });
           });
+
+          nodeID = data.nodeCount;
+
+          stage.draw();
         } else {
           window.alert("HTTP-Error: " + response.status);
         }
@@ -593,7 +609,6 @@
 
           layer.add(newEdge);
           newEdge.moveToBottom();
-          newEdge.zIndex(1);
           newEdgeSource.draggable(false);
 
           newEdgeAnimation.start();
