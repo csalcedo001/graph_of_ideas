@@ -35,14 +35,14 @@
       container.focus();
 
       // Layer for arrows, drawn below layer of nodes
-      var arrowLayer = new Konva.Layer({
+      var edgeLayer = new Konva.Layer({
         id: "Layer-arrows"
       });
       var nodeLayer = new Konva.Layer({
         id: "Layer-nodes"
       });
 
-      stage.add(arrowLayer);
+      stage.add(edgeLayer);
       stage.add(nodeLayer);
 
 
@@ -99,7 +99,7 @@
               edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
-            arrowLayer.draw();
+            edgeLayer.draw();
           });
 
           // Re-draw edges when transformed
@@ -111,7 +111,7 @@
               edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
-            arrowLayer.draw();
+            edgeLayer.draw();
           });
 
           // Add circle and text to node, and node to the node layer.
@@ -242,16 +242,16 @@
             });
 
             // Add arrow object to arrow layer
-            arrowLayer.add(this.arrow_);
+            edgeLayer.add(this.arrow_);
 
             // Hide arrow behind touch area
             this.arrow_.moveToBottom();
           }
 
           // Add edge object to arrow layer
-          arrowLayer.add(this);
+          edgeLayer.add(this);
 
-          arrowLayer.draw();
+          edgeLayer.draw();
 
           // Assign edge pointer to its id in nodes object
           edges.push(this);
@@ -698,7 +698,7 @@
           }
         }
 
-        arrowLayer.batchDraw();
+        edgeLayer.batchDraw();
 
         document.getElementById('text').textContent = touchedObject.id();
       });
@@ -752,11 +752,12 @@
             strokeWidth: 4
           });
 
-          arrowLayer.add(newEdge);
+          edgeLayer.add(newEdge);
           newEdge.moveToBottom();
 
           newEdgeAnimation.start();
         }
+        stage.batchDraw();
       });
 
       stage.on("mouseup", function(e) {
@@ -776,7 +777,7 @@
             newEdge.destroy();
           }
 
-          nodeLayer.batchDraw();
+          edgeLayer.batchDraw();
         }
       });
 
