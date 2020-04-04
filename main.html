@@ -302,6 +302,11 @@
           // Get json if valid response
           let data = await response.json();
 
+          var maxX, maxY, minX, minY;
+
+          maxX = minX = data.nodes[0].x;
+          maxY = minY = data.nodes[0].y;
+
           // Map each node in server with new id of session
           data.nodes.forEach(nodeStruct => {
             var node = new Node({
@@ -311,6 +316,19 @@
             });
 
             nodeMapping[nodeStruct.id] = node.id();
+
+            if (nodeStruct.x > maxX) {
+              maxX = nodeStruct.x
+            }
+            if (nodeStruct.y > maxY) {
+              maxY = nodeStruct.y
+            }
+            if (nodeStruct.x < minX) {
+              minX = nodeStruct.x
+            }
+            if (nodeStruct.y < minY) {
+              minY = nodeStruct.y
+            }
           });
 
           // Create new edge with mapped ids
@@ -319,6 +337,25 @@
               source: nodes[nodeMapping[edgeStruct[0]]],
               target: nodes[nodeMapping[edgeStruct[1]]]
             });
+          });
+
+          // Find scale and position that shows every node in screen
+          var offset = 400;
+          var diffX = maxX - minX + offset,
+              diffY = maxY - minY + offset;
+
+          var scale = stage.height() / stage.width() < diffY / diffX
+                      ? stage.height() / diffY
+                      : stage.width() / diffX;
+
+          stage.position({
+            x: (offset / 2 - minX) * scale,
+            y: (offset / 2 - minY) * scale
+          });
+
+          stage.scale({
+            x: scale,
+            y: scale
           });
 
           stage.draw();
@@ -471,8 +508,8 @@
           var position = stage.getPointerPosition();
 
           new Node({
-            x: mouseX,
-            y: mouseY,
+            x: mouseX + stage.position().x,
+            y: mouseY + stage.position().y,
             text: ""
           });
         }
@@ -661,8 +698,8 @@
         // Update mouse position
         var position = stage.getPointerPosition();
         var scale = stage.scale();
-        mouseX = position.x / scale.x - stage.x();
-        mouseY = position.y / scale.y - stage.y();
+        mouseX = (position.x - stage.x()) / scale.x ;
+        mouseY = (position.y - stage.y()) / scale.y ;
 
         // Set previous target opacity to 0 if its an edge and its not selected
         if (touchedObject.id()[0] == "e" && touchedObject != selectedObject) {
