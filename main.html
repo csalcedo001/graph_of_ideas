@@ -234,19 +234,28 @@
           this.points([this.source.x(), this.source.y(), position.x, position.y]);
 
           // Create arrow object
-          this.arrow = new Konva.Arrow({
-            id: "arrow-".concat(id),
-            points: this.points(),
-            strokeWidth: 4,
-            stroke: "black"
-          });
+          if ("arrow" in obj) {
+            this.arrow = obj.arrow;
 
-          // Add edge and arrow objects to arrow layer
-          arrowLayer.add(this.arrow);
+            this.arrow.id("arrow-".concat(id));
+          }
+          else {
+            this.arrow = new Konva.Arrow({
+              id: "arrow-".concat(id),
+              points: this.points(),
+              strokeWidth: 4,
+              stroke: "black"
+            });
+
+            // Add arrow object to arrow layer
+            arrowLayer.add(this.arrow);
+
+            // Hide arrow behind touch area
+            this.arrow.moveToBottom();
+          }
+
+          // Add edge object to arrow layer
           arrowLayer.add(this);
-
-          // Hide arrow behind touch area
-          this.arrow.moveToBottom();
 
           arrowLayer.draw();
 
@@ -772,11 +781,13 @@
           if (!isNaN(currentTarget.id()[0])) {
             new Edge({
               source: newEdgeSource,
-              target: currentTarget
+              target: currentTarget,
+              arrow: newEdge
             });
           }
-
-          newEdge.destroy();
+          else {
+            newEdge.destroy();
+          }
 
           nodeLayer.batchDraw();
         }
