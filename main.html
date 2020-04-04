@@ -620,9 +620,27 @@
       // Mouse position
       var mouseX, mouseY;
 
-      // Dragged new edge animation
-      var newEdgeAnimation = new Konva.Animation(function(frame){}),
-          newEdge = null,
+      // Create animation that sets arrow position to mouse position
+      var newEdgeAnimation = new Konva.Animation(function (frame) {
+        var targetX, targetY;
+
+        if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
+          // Assign arrow head position to node border
+
+          var position = edgeTargetPosition(newEdgeSource, touchedObject);
+
+          targetX = position.x;
+          targetY = position.y;
+        } else {
+          // Assign arrow head position to mouse
+
+          targetX = mouseX;
+          targetY = mouseY;
+        };
+        newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
+      }, nodeLayer);
+
+      var newEdge,
           newEdgeSource;
 
       // Object currently under the mouse
@@ -734,29 +752,7 @@
             strokeWidth: 4
           });
 
-          // Create animation that sets arrow position to mouse position
-          // OPTIMIZE: Use only one animation
-          newEdgeAnimation = new Konva.Animation(function (frame) {
-            var targetX, targetY;
-
-            if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
-              // Assign arrow head position to node border
-
-              var position = edgeTargetPosition(newEdgeSource, touchedObject);
-
-              targetX = position.x;
-              targetY = position.y;
-            } else {
-              // Assign arrow head position to mouse
-
-              targetX = mouseX;
-              targetY = mouseY;
-            }
-
-            newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
-          }, nodeLayer);
-
-          nodeLayer.add(newEdge);
+          arrowLayer.add(newEdge);
           newEdge.moveToBottom();
 
           newEdgeAnimation.start();
