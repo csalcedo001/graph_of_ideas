@@ -81,7 +81,7 @@
           this.text_.y(-this.text_.height() / 2);
 
           // Create circle object
-          this.circle = new Konva.Circle({
+          this.circle_ = new Konva.Circle({
             id: "circle-".concat(this.id()),
             x: 0,
             y: 0,
@@ -89,15 +89,15 @@
             fill: "green"
           });
 
-          this.edges = [];
+          this.edges_ = [];
 
           // Re-draw edges when dragged
           this.on("dragmove", () => {
-            this.edges.forEach(edge => {
-              var position = edgeTargetPosition(edge.source, edge.target);
+            this.edges_.forEach(edge => {
+              var position = edgeTargetPosition(edge.source_, edge.target_);
 
-              edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-              edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
+              edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
             arrowLayer.draw();
@@ -105,18 +105,18 @@
 
           // Re-draw edges when transformed
           this.on("transform", () => {
-            this.edges.forEach(edge => {
-              var position = edgeTargetPosition(edge.source, edge.target);
+            this.edges_.forEach(edge => {
+              var position = edgeTargetPosition(edge.source_, edge.target_);
 
-              edge.points([edge.source.x(), edge.source.y(), position.x, position.y]);
-              edge.arrow.points([edge.source.x(), edge.source.y(), position.x, position.y]);
+              edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
+              edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
             arrowLayer.draw();
           });
 
           // Add circle and text to node, and node to the node layer.
-          this.add(this.circle);
+          this.add(this.circle_);
           this.add(this.text_);
           nodeLayer.add(this);
 
@@ -137,10 +137,10 @@
             Node object with updated radius.
           **/
           if (radius === undefined || radius === null) {
-            return this.circle.radius();
+            return this.circle_.radius();
           }
           else {
-            this.circle.radius(radius);
+            this.circle_.radius(radius);
 
             return this;
           }
@@ -174,7 +174,7 @@
             edge -- Edge object to connect with node.
           **/
 
-          this.edges.push(edge);
+          this.edges_.push(edge);
         }
         destroy() {
           /**
@@ -182,28 +182,27 @@
           **/
 
           // Destroy edges
-          this.edges.forEach(edge => {
-            edge.destroy(edge.source == this ? edge.target : edge.source);
+          this.edges_.forEach(edge => {
+            edge.destroy(edge.source_ == this ? edge.target_ : edge.source_);
           });
 
           // Remove node from object of nodes
           delete nodes[this.id()];
 
           // Destroy remaining objects
-          this.circle.destroy();
+          this.circle_.destroy();
           this.text_.destroy();
 
           super.destroy();
         }
         alpha(a) {
           super.alpha(a);
-          this.circle.alpha(a);
+          this.circle_.alpha(a);
         }
       };
 
 
       class Edge extends Konva.Line {
-        // TODO: Accept arrow attribute
         constructor(obj) {
           /**
             Arguments:
@@ -222,25 +221,25 @@
           super(obj);
 
           // Define and connect source and target nodes
-          this.source = obj.source;
-          this.target = obj.target;
+          this.source_ = obj.source;
+          this.target_ = obj.target;
 
-          this.source.connect(this);
-          this.target.connect(this);
+          this.source_.connect(this);
+          this.target_.connect(this);
 
           // Find tagrget position for arrow
-          var position = edgeTargetPosition(this.source, this.target);
+          var position = edgeTargetPosition(this.source_, this.target_);
 
-          this.points([this.source.x(), this.source.y(), position.x, position.y]);
+          this.points([this.source_.x(), this.source_.y(), position.x, position.y]);
 
           // Create arrow object
           if ("arrow" in obj) {
-            this.arrow = obj.arrow;
+            this.arrow_ = obj.arrow;
 
-            this.arrow.id("arrow-".concat(id));
+            this.arrow_.id("arrow-".concat(id));
           }
           else {
-            this.arrow = new Konva.Arrow({
+            this.arrow_ = new Konva.Arrow({
               id: "arrow-".concat(id),
               points: this.points(),
               strokeWidth: 4,
@@ -248,10 +247,10 @@
             });
 
             // Add arrow object to arrow layer
-            arrowLayer.add(this.arrow);
+            arrowLayer.add(this.arrow_);
 
             // Hide arrow behind touch area
-            this.arrow.moveToBottom();
+            this.arrow_.moveToBottom();
           }
 
           // Add edge object to arrow layer
@@ -274,13 +273,13 @@
           var index;
 
           // Remove edge from edge lists of nodes
-          if (target != this.target) {
-            index = this.source.edges.indexOf(this);
-            this.source.edges.splice(index, 1);
+          if (target != this.target_) {
+            index = this.source_.edges_.indexOf(this);
+            this.source_.edges_.splice(index, 1);
           }
-          if (target != this.source) {
-            index = this.target.edges.indexOf(this);
-            this.target.edges.splice(index, 1);
+          if (target != this.source_) {
+            index = this.target_.edges_.indexOf(this);
+            this.target_.edges_.splice(index, 1);
           }
 
           // Remove edge from object of edges
@@ -288,7 +287,7 @@
           delete edges.splice(index, 1);
 
           // Destroy objects
-          this.arrow.destroy();
+          this.arrow_.destroy();
 
           super.destroy();
         }
@@ -458,15 +457,15 @@
             }),
             edges: Object.values(edges).map(function(edge) {
               return [
-                edge.source.id(),
-                edge.target.id()
+                edge.source_.id(),
+                edge.target_.id()
               ];
             })
           });
         }
         // Return: Delete selected object
-        if (e.which == 8 && currentSelection != stage) {
-          currentSelection.destroy();
+        if (e.which == 8 && selectedObject != stage) {
+          selectedObject.destroy();
           selectionTransformer.visible(false);
           stage.draw();
         }
@@ -474,7 +473,7 @@
 
       stage.on("dblclick", function(e) {
         // Double click stage: Create node
-        if (currentTarget.id() == "stage") {
+        if (touchedObject.id() == "stage") {
           var position = stage.getPointerPosition();
 
           new Node({
@@ -484,10 +483,10 @@
           });
         }
         // Double click node: Text edition
-        else if (!isNaN(currentTarget.id()[0])) {
+        else if (!isNaN(touchedObject.id()[0])) {
           // From this point until the end of the if block, code has been
           // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
-          var textNode = currentTarget.text_;
+          var textNode = touchedObject.text_;
 
           textNode.hide();
           nodeLayer.batchDraw();
@@ -632,13 +631,11 @@
           newEdge = null,
           newEdgeSource;
 
-      // TODO: Rename to mouseObject
       // Object currently under the mouse
-      var currentTarget = stage;
+      var touchedObject = stage;
 
-      // TODO: Rename to selectedObject
       // Object clicked
-      var currentSelection = stage;
+      var selectedObject = stage;
 
       // Transformer of selected nodes
       var selectionTransformer = new Konva.Transformer({
@@ -655,75 +652,75 @@
         mouseY = position.y - stage.y();
 
         // Set previous target opacity to 0 if its an edge and its not selected
-        if (currentTarget.id()[0] == "e" && currentTarget != currentSelection) {
-          currentTarget.opacity(0);
+        if (touchedObject.id()[0] == "e" && touchedObject != selectedObject) {
+          touchedObject.opacity(0);
         }
 
         var parent = e.target.getParent();
 
         if (parent == undefined) {
           // Only the stage lacks a parent
-          currentTarget = stage;
+          touchedObject = stage;
         }
         else {
           var id = parent.id()[0];
 
           if (!isNaN(id)) {
             // Node
-            currentTarget = parent;
+            touchedObject = parent;
           }
           else if (id == "T") {
             // Node transformer
-            currentTarget = parent.node();
+            touchedObject = parent.node();
           }
           else if (e.target.id()[0] == "e") {
             // Edge
-            currentTarget = e.target;
+            touchedObject = e.target;
 
-            if (currentTarget != currentSelection) {
-              currentTarget.opacity(0.2);
+            if (touchedObject != selectedObject) {
+              touchedObject.opacity(0.2);
             }
           }
           else {
-            currentTarget = stage;
+            touchedObject = stage;
           }
         }
 
         arrowLayer.batchDraw();
 
-        document.getElementById('text').textContent = currentTarget.id();
+        document.getElementById('text').textContent = touchedObject.id();
       });
 
       stage.on("mousedown", function(e) {
-        if (currentSelection != currentTarget) {
+        if (selectedObject != touchedObject) {
           // Make previous selected edge invisible
-          if (currentSelection.id()[0] == "e") {
-            currentSelection.opacity(0);
+          if (selectedObject.id()[0] == "e") {
+            selectedObject.opacity(0);
           }
 
-          currentSelection = currentTarget;
+          selectedObject = touchedObject;
 
-          if (!isNaN(currentSelection.id()[0])) {
+          if (!isNaN(selectedObject.id()[0])) {
             // Left click node: Show transformer
 
             selectionTransformer.moveToTop();
             selectionTransformer.visible(true);
-            selectionTransformer.node(currentSelection);
+            selectionTransformer.node(selectedObject);
           }
-          else if (currentSelection.id()[0] == "e") {
+          else if (selectedObject.id()[0] == "e") {
             // Left click edge: Show selection area
 
             selectionTransformer.visible(false);
-            currentSelection.opacity(0.4);
+            selectedObject.opacity(0.4);
           }
-          else if (currentSelection.id() == "stage"){
+          else if (selectedObject.id() == "stage"){
             // Left click stage: Hide transformer
 
             selectionTransformer.visible(false);
           }
         }
 
-        if (!isNaN(currentTarget.id()[0]) && window.event.metaKey) {
+        if (!isNaN(touchedObject.id()[0]) && window.event.metaKey) {
           // Command + Left click node: Start arrow dragging animation
 
           // Stop any possibly running animations
@@ -733,7 +730,7 @@
           }
 
           // Prevent node from being dragged with arrow
-          newEdgeSource = currentSelection;
+          newEdgeSource = selectedObject;
           newEdgeSource.draggable(false);
 
           // Create arrow object
@@ -748,10 +745,10 @@
           newEdgeAnimation = new Konva.Animation(function (frame) {
             var targetX, targetY;
 
-            if (!isNaN(currentTarget.id()[0]) && currentTarget != newEdgeSource) {
+            if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
               // Assign arrow head position to node border
 
-              var position = edgeTargetPosition(newEdgeSource, currentTarget);
+              var position = edgeTargetPosition(newEdgeSource, touchedObject);
 
               targetX = position.x;
               targetY = position.y;
@@ -778,10 +775,10 @@
           newEdgeSource.draggable(true);
 
           // Arrow dragging released over node: Create edge
-          if (!isNaN(currentTarget.id()[0])) {
+          if (!isNaN(touchedObject.id()[0])) {
             new Edge({
               source: newEdgeSource,
-              target: currentTarget,
+              target: touchedObject,
               arrow: newEdge
             });
           }
