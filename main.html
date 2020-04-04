@@ -312,7 +312,10 @@
             var node = new Node({
               x: nodeStruct.x,
               y: nodeStruct.y,
-              text: nodeStruct.text
+              text: nodeStruct.text,
+              scaleX: nodeStruct.scaleX,
+              scaleY: nodeStruct.scaleY,
+              rotation: nodeStruct.rotation
             });
 
             nodeMapping[nodeStruct.id] = node.id();
@@ -369,10 +372,9 @@
           Post updated graph nodes and edges.
 
           Arguments:
-          data -- Object that holds nodes, edges and nodeCount keys.
+          data -- Object that holds nodes and edges keys.
             nodes -- List of objects of attributes id, x, y and text.
             edges -- List of lists, pirs of source and target id's respectively.
-            nodeCount -- Next id that won't conflict with previous id's.
         **/
 
         let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/save", {
@@ -477,16 +479,18 @@
         // Ctrl + S: Save graph
         if (window.event.ctrlKey && e.which == 83) {
           postGraph({
-            nodeCount: nodeID,
             nodes: Object.values(nodes).map(function(node) {
               return {
                 id: node.id(),
                 x: node.x(),
                 y: node.y(),
-                text: node.text()
+                text: node.text(),
+                scaleX: node.scaleX(),
+                scaleY: node.scaleY(),
+                rotation: node.rotation()
               };
             }),
-            edges: Object.values(edges).map(function(edge) {
+            edges: edges.map(function(edge) {
               return [
                 edge.source_.id(),
                 edge.target_.id()
