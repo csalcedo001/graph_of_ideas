@@ -471,8 +471,8 @@
           var position = stage.getPointerPosition();
 
           new Node({
-            x: position.x,
-            y: position.y,
+            x: mouseX,
+            y: mouseY,
             text: ""
           });
         }
@@ -660,8 +660,9 @@
       stage.on("mousemove", function(e) {
         // Update mouse position
         var position = stage.getPointerPosition();
-        mouseX = position.x - stage.x();
-        mouseY = position.y - stage.y();
+        var scale = stage.scale();
+        mouseX = position.x / scale.x - stage.x();
+        mouseY = position.y / scale.y - stage.y();
 
         // Set previous target opacity to 0 if its an edge and its not selected
         if (touchedObject.id()[0] == "e" && touchedObject != selectedObject) {
@@ -700,7 +701,7 @@
 
         edgeLayer.batchDraw();
 
-        document.getElementById('text').textContent = touchedObject.id();
+        document.getElementById('text').textContent = mouseX;
       });
 
       stage.on("mousedown", function(e) {
