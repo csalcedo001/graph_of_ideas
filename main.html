@@ -49,8 +49,7 @@
 
       // Objects that map ids of nodes and edges to their objects
       var nodes = {};
-      // TODO: Check if edges is necessary, could be deleted
-      var edges = {};
+      var edges = [];
 
       class Node extends Konva.Group {
         constructor(obj) {
@@ -252,7 +251,7 @@
           arrowLayer.draw();
 
           // Assign edge pointer to its id in nodes object
-          edges[this.id()] = this;
+          edges.push(this);
         }
         destroy(target) {
           /**
@@ -276,7 +275,8 @@
           }
 
           // Remove edge from object of edges
-          delete edges[this.id()];
+          index = edges.indexOf(this);
+          delete edges.splice(index, 1);
 
           // Destroy objects
           this.arrow.destroy();
@@ -371,7 +371,6 @@
         return (nodeID++).toString();
       }
 
-      // TODO: Check if edges need ids. If not, delete this function
       var edgeID = 0;
       function edgeNextID() {
         /**
@@ -783,8 +782,8 @@
         }
       });
 
-      // All the code for 'wheel' event was taken from Konva demos, code taken
-      // from: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
+      // All the code for 'wheel' event was taken from Konva documentation:
+      // https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
 
       var scaleBy = 1.025;
 
