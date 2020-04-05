@@ -102,9 +102,7 @@
           // Re-draw edges when dragged
           this.on("dragmove", () => {
             this.edges_.forEach(edge => {
-              var position = edgeTargetPosition(edge.source_, edge.target_);
-
-              edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
+              edge.points(Edge.arrowPoints(edge.source_, edge.target_));
             });
 
             edgeLayer.draw();
@@ -113,9 +111,7 @@
           // Re-draw edges when transformed
           this.on("transform", () => {
             this.edges_.forEach(edge => {
-              var position = edgeTargetPosition(edge.source_, edge.target_);
-
-              edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
+              edge.points(Edge.arrowPoints(edge.source_, edge.target_));
             });
 
             edgeLayer.draw();
@@ -231,9 +227,7 @@
           this.target_.connect(this);
 
           // Find tagrget position for arrow
-          var position = edgeTargetPosition(this.source_, this.target_);
-
-          super.points([this.source_.x(), this.source_.y(), position.x, position.y]);
+          super.points(Edge.arrowPoints(this.source_,this.target_));
 
           // Create arrow object
           if ("arrow" in obj) {
@@ -317,6 +311,60 @@
             return this;
           }
 
+        }
+        static arrowPoints(source, target) {
+          /**
+            Find points of arrow given the source and target nodes.
+
+            Arguments:
+            source -- Node from which the arrow is drawn.
+            target -- Node where the arrow points to.
+
+            Returns:
+            -- Array of size 4 whose first pair and last pair are the x and y
+               axis of the source and target positions of the arrow.
+          **/
+
+          // Move center of plane to target
+          var px = source.x() - target.x();
+          var py = source.y() - target.y();
+
+          // Convert rotation angle to radians
+          var rotation = -target.rotation() * Math.PI / 180;
+          var pxtmp = px;
+
+          // Rotate plane
+          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
+
+          // Rescale plane
+          px /= target.scaleX();
+          py /= target.scaleY();
+
+          // Find point in which circumference and line from source to target touch
+          var h = Math.sqrt(Math.pow(px, 2) + Math.pow(py, 2));
+
+          px *= target.radius() / h,
+          py *= target.radius() / h
+
+          // Undo rescale
+          px *= target.scaleX();
+          py *= target.scaleY();
+
+          // Undo rotation
+          rotation = -rotation;
+          pxtmp = px;
+
+          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
+
+          // Return list of points with plane back to original position
+          return [
+            source.x(),
+            source.y(),
+            px + target.x(),
+            py + target.y()
+          ];
         }
       };
 
@@ -452,60 +500,6 @@
         **/
 
         return (edgeID++).toString();
-      }
-
-      function edgeTargetPosition(source, target) {
-        /**
-          Find point of arrow head given the source and target nodes.
-
-          Arguments:
-          source -- Node from which the arrow is drawn.
-          target -- Node where the arrow points.
-
-          Returns:
-          -- Object of attributes x and y.
-            x -- Number of x coordinate of arrow head.
-            y -- Number of y coordinate of arrow head.
-        **/
-
-        // Move center of plane to target
-        var px = source.x() - target.x();
-        var py = source.y() - target.y();
-
-        // Convert rotation angle to radians
-        var rotation = -target.rotation() * Math.PI / 180;
-        var pxtmp = px;
-
-        // Rotate plane
-        px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
-        py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
-
-        // Rescale plane
-        px /= target.scaleX();
-        py /= target.scaleY();
-
-        // Find point in which circumference and line from source to target touch
-        var h = Math.sqrt(Math.pow(px, 2) + Math.pow(py, 2));
-
-        px *= target.radius() / h,
-        py *= target.radius() / h
-
-        // Undo rescale
-        px *= target.scaleX();
-        py *= target.scaleY();
-
-        // Undo rotation
-        rotation = -rotation;
-        pxtmp = px;
-
-        px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
-        py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
-
-        // Return plane to original position
-        return {
-          x: px + target.x(),
-          y: py + target.y()
-        };
       }
 
       container.addEventListener("keydown", function(e) {
@@ -696,22 +690,16 @@
 
       // Create animation that sets arrow position to mouse position
       var newEdgeAnimation = new Konva.Animation(function (frame) {
-        var targetX, targetY;
-
+        // If mouse is over a node that is not the source node
         if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
           // Assign arrow head position to node border
 
-          var position = edgeTargetPosition(newEdgeSource, touchedObject);
-
-          targetX = position.x;
-          targetY = position.y;
+          newEdge.points(Edge.arrowPoints(newEdgeSource, touchedObject));
         } else {
           // Assign arrow head position to mouse
 
-          targetX = mouseX;
-          targetY = mouseY;
+          newEdge.points([newEdgeSource.x(), newEdgeSource.y(), mouseX, mouseY]);
         };
-        newEdge.points([newEdgeSource.x(), newEdgeSource.y(), targetX, targetY]);
       }, nodeLayer);
 
       var newEdge,
