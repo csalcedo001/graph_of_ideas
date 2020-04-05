@@ -63,6 +63,8 @@
             Arguments:
             obj -- Initialization object for parent class, circle and text.
           **/
+          // TODO: Add nodeLayer as attribute of Node class
+          // TODO: Define Node.draw() & Node.batchDraw()
 
           var id = nodeNextID();
 
@@ -103,7 +105,6 @@
               var position = edgeTargetPosition(edge.source_, edge.target_);
 
               edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
-              edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
             edgeLayer.draw();
@@ -115,7 +116,6 @@
               var position = edgeTargetPosition(edge.source_, edge.target_);
 
               edge.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
-              edge.arrow_.points([edge.source_.x(), edge.source_.y(), position.x, position.y]);
             });
 
             edgeLayer.draw();
@@ -167,7 +167,7 @@
             return this.text_.text();
           }
           else {
-            this.text_,text(text);
+            this.text_.text(text);
 
             return this;
           }
@@ -233,7 +233,7 @@
           // Find tagrget position for arrow
           var position = edgeTargetPosition(this.source_, this.target_);
 
-          this.points([this.source_.x(), this.source_.y(), position.x, position.y]);
+          super.points([this.source_.x(), this.source_.y(), position.x, position.y]);
 
           // Create arrow object
           if ("arrow" in obj) {
@@ -244,7 +244,7 @@
           else {
             this.arrow_ = new Konva.Arrow({
               id: "arrow-".concat(id),
-              points: this.points(),
+              points: super.points(),
               strokeWidth: 4,
               stroke: "black"
             });
@@ -294,7 +294,30 @@
 
           super.destroy();
         }
-        // TODO: points(points) overloading
+        points(points) {
+          /**
+            Getter and Setter of edge points.
+
+            Arguments:
+            points -- New points to set. If undefined, method is getter.
+
+            Returns:
+            If points is undefined, returns current edge points. If not, returns
+            Edge object with updated points.
+          **/
+
+          if (points === undefined || points === null) {
+            this.arrow_.points();
+            return super.points();
+          }
+          else {
+            this.arrow_.points(points);
+            super.points(points);
+
+            return this;
+          }
+
+        }
       };
 
       // Mapping from node id's in server to assigned id's in session
