@@ -44,6 +44,8 @@
           this.nodes = {};
           this.edges = [];
         }
+        // TODO: Create load()
+        // TODO: Create save()
       };
 
       class Node extends Konva.Group {
@@ -548,6 +550,7 @@
         else if (!isNaN(touchedObject.id()[0])) {
           // From this point until the end of the if block, code has been
           // taken from https://konvajs.org/docs/sandbox/Editable_Text.html
+          selectionTransformer.visible(false);
           var textNode = touchedObject.text_;
 
           textNode.hide();
