@@ -34,19 +34,82 @@
       container.tabIndex = 1;
       container.focus();
 
-
-      // Objects that map ids of nodes and edges to their objects
-      var nodes = {};
-      var edges = [];
-
       class Graph {
         constructor() {
-          this.nodes = {};
-          this.edges = [];
+          this.nodes_ = {};
+          this.edges_ = [];
+        }
+        addNode(obj) {
+          /**
+            Create node and add it to node mapping object.
+
+            Arguments:
+            obj -- Initialization object for Node.
+          **/
+
+          var node = new Node(obj);
+
+          this.nodes_[node.id()] = node;
+
+          return node;
+        }
+        addEdge(obj) {
+          /**
+            Create edge and add it to edge list.
+
+            Arguments:
+            obj -- Initialization object for Node.
+          **/
+
+          var edge = new Edge(obj);
+
+          this.edges_.push(edge);
+
+          return edge;
+        }
+        removeNode(node) {
+          /**
+            Remove node from node mapping object and destroy.
+
+            Arguments:
+            node -- Node to be removed.
+          **/
+
+          delete this.nodes_[node.id()];
+
+          node.destroy();
+        }
+        removeEdge(edge) {
+          /**
+            Remove edge from edge list and destroy.
+
+            Arguments:
+            edge -- Edge to be removed.
+          **/
+
+          var index = this.edges_.indexOf(edge);
+
+          if (index > -1) {
+            delete this.edges_.splice(index, 1);
+
+            edge.destroy();
+          }
+        }
+        node(id) {
+          /**
+            Node getter.
+
+            Arguments:
+            id -- ID of node to get.
+          **/
+
+          return this.nodes_[id];
         }
         // TODO: Create load()
         // TODO: Create save()
       };
+
+      var graph = new Graph();
 
       class Node extends Konva.Group {
         // Next node's ID
@@ -62,8 +125,6 @@
             Arguments:
             obj -- Initialization object for parent class, circle and text.
           **/
-          // TODO: Define Node.draw() & Node.batchDraw()
-
           // TODO: If multithreading is available, this function should be atomic
           var id = (Node.nextID++).toString();
 
@@ -120,11 +181,6 @@
           this.add(this.circle_);
           this.add(this.text_);
           Node.layer.add(this);
-
-          Node.layer.batchDraw();
-
-          // Assign node pointer to its id in nodes object
-          nodes[this.id()] = this;
         }
         radius(radius) {
           /**
@@ -200,9 +256,6 @@
           this.edges_.forEach(edge => {
             edge.destroy(edge.source_ == this ? edge.target_ : edge.source_);
           });
-
-          // Remove node from object of nodes
-          delete nodes[this.id()];
 
           // Destroy remaining objects
           this.circle_.destroy();
@@ -326,11 +379,6 @@
 
           // Add edge object to arrow layer
           Edge.layer.add(this);
-
-          Edge.layer.draw();
-
-          // Assign edge pointer to its id in nodes object
-          edges.push(this);
         }
         points(points) {
           /**
@@ -373,10 +421,6 @@
             this.target_.disconnect(this);
           }
 
-          // Remove edge from object of edges
-          var index = edges.indexOf(this);
-          delete edges.splice(index, 1);
-
           // Destroy objects
           this.arrow_.destroy();
 
@@ -410,7 +454,7 @@
 
           // Map each node in server with new id of session
           data.nodes.forEach(nodeStruct => {
-            var node = new Node({
+            var node = graph.addNode({
               x: nodeStruct.x,
               y: nodeStruct.y,
               text: nodeStruct.text,
@@ -422,24 +466,24 @@
             nodeMapping[nodeStruct.id] = node.id();
 
             if (nodeStruct.x > maxX) {
-              maxX = nodeStruct.x
+              maxX = nodeStruct.x;
             }
             if (nodeStruct.y > maxY) {
-              maxY = nodeStruct.y
+              maxY = nodeStruct.y;
             }
             if (nodeStruct.x < minX) {
-              minX = nodeStruct.x
+              minX = nodeStruct.x;
             }
             if (nodeStruct.y < minY) {
-              minY = nodeStruct.y
+              minY = nodeStruct.y;
             }
           });
 
           // Create new edge with mapped ids
           data.edges.forEach(edgeStruct => {
-            new Edge({
-              source: nodes[nodeMapping[edgeStruct[0]]],
-              target: nodes[nodeMapping[edgeStruct[1]]]
+            graph.addEdge({
+              source: graph.node(nodeMapping[edgeStruct[0]]),
+              target: graph.node(nodeMapping[edgeStruct[1]])
             });
           });
 
@@ -508,7 +552,7 @@
         // Ctrl + S: Save graph
         if (window.event.ctrlKey && e.which == 83) {
           postGraph({
-            nodes: Object.values(nodes).map(function(node) {
+            nodes: Object.values(graph.nodes_).map(function(node) {
               return {
                 id: node.id(),
                 x: node.x(),
@@ -519,7 +563,7 @@
                 rotation: node.rotation()
               };
             }),
-            edges: edges.map(function(edge) {
+            edges: graph.edges_.map(function(edge) {
               return [
                 edge.source_.id(),
                 edge.target_.id()
@@ -529,9 +573,16 @@
         }
         // Return: Delete selected object
         if (e.which == 8 && selectedObject != stage) {
-          selectedObject.destroy();
           selectionTransformer.visible(false);
-          stage.draw();
+
+          if (!isNaN(selectedObject.id()[0])) {
+            graph.removeNode(selectedObject);
+            stage.batchDraw();
+          }
+          else {
+            graph.removeEdge(selectedObject);
+            Edge.layer.batchDraw();
+          }
         }
       });
 
@@ -540,11 +591,13 @@
         if (touchedObject.id() == "stage") {
           var position = stage.getPointerPosition();
 
-          new Node({
+          graph.addNode({
             x: mouseX + stage.position().x,
             y: mouseY + stage.position().y,
             text: ""
           });
+
+          Node.layer.batchDraw();
         }
         // Double click node: Text edition
         else if (!isNaN(touchedObject.id()[0])) {
@@ -823,6 +876,7 @@
 
           newEdgeAnimation.start();
         }
+
         stage.batchDraw();
       });
 
@@ -833,7 +887,7 @@
 
           // Arrow dragging released over node: Create edge
           if (!isNaN(touchedObject.id()[0])) {
-            new Edge({
+            graph.addEdge({
               source: newEdgeSource,
               target: touchedObject,
               arrow: newEdge
@@ -847,7 +901,7 @@
         }
       });
 
-      // All the code for 'wheel' event was taken from Konva documentation:
+      // Source code for 'wheel' event was taken from Konva documentation:
       // https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
 
       var scaleBy = 1.025;
