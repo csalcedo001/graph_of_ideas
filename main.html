@@ -58,6 +58,9 @@
       };
 
       class Node extends Konva.Group {
+        // Next node's ID
+        static nodeID = 0;
+
         constructor(obj) {
           /**
             Arguments:
@@ -66,7 +69,8 @@
           // TODO: Add nodeLayer as attribute of Node class
           // TODO: Define Node.draw() & Node.batchDraw()
 
-          var id = nodeNextID();
+          // TODO: If multithreading is available, this function should be atomic
+          var id = (Node.nodeID++).toString();
 
           // Set constant parameters
           obj.id = id;
@@ -202,13 +206,16 @@
 
 
       class Edge extends Konva.Line {
+        // Next edge's ID
+        static edgeID = 0;
+
         constructor(obj) {
           /**
             Arguments:
             obj -- Initialization object for parent class and arrow.
           **/
 
-          var id = edgeNextID();
+          var id = (Edge.edgeID++).toString();
 
           // Set constant parameters
 
@@ -483,24 +490,6 @@
 
       getGraph();
 
-      // TODO: If multithreading is available, this function should be atomic
-      var nodeID = 0;
-      function nodeNextID() {
-        /**
-          Get id of next node.
-        **/
-
-        return (nodeID++).toString();
-      }
-
-      var edgeID = 0;
-      function edgeNextID() {
-        /**
-          Get id of next edge.
-        **/
-
-        return (edgeID++).toString();
-      }
 
       container.addEventListener("keydown", function(e) {
         // Ctrl + S: Save graph
@@ -763,7 +752,7 @@
 
         edgeLayer.batchDraw();
 
-        document.getElementById('text').textContent = mouseX;
+        document.getElementById('text').textContent = touchedObject.id();
       });
 
       stage.on("mousedown", function(e) {
