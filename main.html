@@ -167,13 +167,27 @@
         }
         connect(edge) {
           /**
-            Connects node with an edge.
+            Connects node with edge.
 
             Arguments:
-            edge -- Edge object to connect with node.
+            edge -- Edge object to be connected.
           **/
 
           this.edges_.push(edge);
+        }
+        disconnect(edge) {
+          /**
+            Disconnects edge from node.
+
+            Arguments:
+            edge -- Edge object to be disconnected.
+          **/
+
+          var index = this.edges_.indexOf(edge);
+
+          if (index > -1) {
+            this.edges_.splice(index, 1);
+          }
         }
         destroy() {
           /**
@@ -194,7 +208,6 @@
 
           super.destroy();
         }
-        // TODO: disconnect(edge)
       };
 
       class Edge extends Konva.Line {
@@ -205,6 +218,61 @@
         static layer = new Konva.Layer({
           id: "Layer-edges"
         });
+
+        static arrowPoints(source, target) {
+          /**
+            Find points of arrow given the source and target nodes.
+
+            Arguments:
+            source -- Node from which the arrow is drawn.
+            target -- Node where the arrow points to.
+
+            Returns:
+            -- Array of size 4 whose first pair and last pair are the x and y
+               axis of the source and target positions of the arrow.
+          **/
+
+          // Move center of plane to target
+          var px = source.x() - target.x();
+          var py = source.y() - target.y();
+
+          // Convert rotation angle to radians
+          var rotation = -target.rotation() * Math.PI / 180;
+          var pxtmp = px;
+
+          // Rotate plane
+          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
+
+          // Rescale plane
+          px /= target.scaleX();
+          py /= target.scaleY();
+
+          // Find point in which circumference and line from source to target touch
+          var h = Math.sqrt(Math.pow(px, 2) + Math.pow(py, 2));
+
+          px *= target.radius() / h,
+          py *= target.radius() / h
+
+          // Undo rescale
+          px *= target.scaleX();
+          py *= target.scaleY();
+
+          // Undo rotation
+          rotation = -rotation;
+          pxtmp = px;
+
+          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
+          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
+
+          // Return list of points with plane back to original position
+          return [
+            source.x(),
+            source.y(),
+            px + target.x(),
+            py + target.y()
+          ];
+        }
 
         constructor(obj) {
           /**
@@ -262,36 +330,6 @@
           // Assign edge pointer to its id in nodes object
           edges.push(this);
         }
-        destroy(target) {
-          /**
-            Destroy node, circle, text and neighbor edges.
-
-            Arguments:
-            target -- Node from which edge must be deleted. If undefined,
-                      destroy from both nodes.
-          **/
-
-          var index;
-
-          // Remove edge from edge lists of nodes
-          if (target != this.target_) {
-            index = this.source_.edges_.indexOf(this);
-            this.source_.edges_.splice(index, 1);
-          }
-          if (target != this.source_) {
-            index = this.target_.edges_.indexOf(this);
-            this.target_.edges_.splice(index, 1);
-          }
-
-          // Remove edge from object of edges
-          index = edges.indexOf(this);
-          delete edges.splice(index, 1);
-
-          // Destroy objects
-          this.arrow_.destroy();
-
-          super.destroy();
-        }
         points(points) {
           /**
             Getter and Setter of edge points.
@@ -316,59 +354,31 @@
           }
 
         }
-        static arrowPoints(source, target) {
+        destroy(target) {
           /**
-            Find points of arrow given the source and target nodes.
+            Destroy node, circle, text and neighbor edges.
 
             Arguments:
-            source -- Node from which the arrow is drawn.
-            target -- Node where the arrow points to.
-
-            Returns:
-            -- Array of size 4 whose first pair and last pair are the x and y
-               axis of the source and target positions of the arrow.
+            target -- Node from which edge must be deleted. If undefined,
+                      destroy from both nodes.
           **/
 
-          // Move center of plane to target
-          var px = source.x() - target.x();
-          var py = source.y() - target.y();
+          // Remove edge from edge lists of nodes
+          if (target != this.target_) {
+            this.source_.disconnect(this);
+          }
+          if (target != this.source_) {
+            this.target_.disconnect(this);
+          }
 
-          // Convert rotation angle to radians
-          var rotation = -target.rotation() * Math.PI / 180;
-          var pxtmp = px;
+          // Remove edge from object of edges
+          var index = edges.indexOf(this);
+          delete edges.splice(index, 1);
 
-          // Rotate plane
-          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
-          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
+          // Destroy objects
+          this.arrow_.destroy();
 
-          // Rescale plane
-          px /= target.scaleX();
-          py /= target.scaleY();
-
-          // Find point in which circumference and line from source to target touch
-          var h = Math.sqrt(Math.pow(px, 2) + Math.pow(py, 2));
-
-          px *= target.radius() / h,
-          py *= target.radius() / h
-
-          // Undo rescale
-          px *= target.scaleX();
-          py *= target.scaleY();
-
-          // Undo rotation
-          rotation = -rotation;
-          pxtmp = px;
-
-          px = pxtmp * Math.cos(rotation) - py * Math.sin(rotation);
-          py = pxtmp * Math.sin(rotation) + py * Math.cos(rotation);
-
-          // Return list of points with plane back to original position
-          return [
-            source.x(),
-            source.y(),
-            px + target.x(),
-            py + target.y()
-          ];
+          super.destroy();
         }
       };
 
