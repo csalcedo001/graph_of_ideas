@@ -34,17 +34,6 @@
       container.tabIndex = 1;
       container.focus();
 
-      // Layer for arrows, drawn below layer of nodes
-      var edgeLayer = new Konva.Layer({
-        id: "Layer-arrows"
-      });
-      var nodeLayer = new Konva.Layer({
-        id: "Layer-nodes"
-      });
-
-      stage.add(edgeLayer);
-      stage.add(nodeLayer);
-
 
       // Objects that map ids of nodes and edges to their objects
       var nodes = {};
@@ -59,18 +48,22 @@
 
       class Node extends Konva.Group {
         // Next node's ID
-        static nodeID = 0;
+        static nextID = 0;
+
+        // Layer of nodes
+        static layer = new Konva.Layer({
+          id: "Layer-nodes"
+        });
 
         constructor(obj) {
           /**
             Arguments:
             obj -- Initialization object for parent class, circle and text.
           **/
-          // TODO: Add nodeLayer as attribute of Node class
           // TODO: Define Node.draw() & Node.batchDraw()
 
           // TODO: If multithreading is available, this function should be atomic
-          var id = (Node.nodeID++).toString();
+          var id = (Node.nextID++).toString();
 
           // Set constant parameters
           obj.id = id;
@@ -109,7 +102,7 @@
               edge.points(Edge.arrowPoints(edge.source_, edge.target_));
             });
 
-            edgeLayer.draw();
+            Edge.layer.draw();
           });
 
           // Re-draw edges when transformed
@@ -118,15 +111,15 @@
               edge.points(Edge.arrowPoints(edge.source_, edge.target_));
             });
 
-            edgeLayer.draw();
+            Edge.layer.draw();
           });
 
           // Add circle and text to node, and node to the node layer.
           this.add(this.circle_);
           this.add(this.text_);
-          nodeLayer.add(this);
+          Node.layer.add(this);
 
-          nodeLayer.batchDraw();
+          Node.layer.batchDraw();
 
           // Assign node pointer to its id in nodes object
           nodes[this.id()] = this;
@@ -204,10 +197,14 @@
         // TODO: disconnect(edge)
       };
 
-
       class Edge extends Konva.Line {
         // Next edge's ID
-        static edgeID = 0;
+        static nextID = 0;
+
+        // Layer of edges
+        static layer = new Konva.Layer({
+          id: "Layer-edges"
+        });
 
         constructor(obj) {
           /**
@@ -215,7 +212,7 @@
             obj -- Initialization object for parent class and arrow.
           **/
 
-          var id = (Edge.edgeID++).toString();
+          var id = (Edge.nextID++).toString();
 
           // Set constant parameters
 
@@ -251,16 +248,16 @@
             });
 
             // Add arrow object to arrow layer
-            edgeLayer.add(this.arrow_);
+            Edge.layer.add(this.arrow_);
 
             // Hide arrow behind touch area
             this.arrow_.moveToBottom();
           }
 
           // Add edge object to arrow layer
-          edgeLayer.add(this);
+          Edge.layer.add(this);
 
-          edgeLayer.draw();
+          Edge.layer.draw();
 
           // Assign edge pointer to its id in nodes object
           edges.push(this);
@@ -374,6 +371,10 @@
           ];
         }
       };
+
+      // Draw layer of edges below layer of nodes
+      stage.add(Edge.layer);
+      stage.add(Node.layer);
 
       // Mapping from node id's in server to assigned id's in session
       var nodeMapping = {};
@@ -540,7 +541,7 @@
           var textNode = touchedObject.text_;
 
           textNode.hide();
-          nodeLayer.batchDraw();
+          Node.layer.batchDraw();
 
           // create textarea over canvas with absolute position
           // first we need to find position for textarea
@@ -614,7 +615,7 @@
             textarea.parentNode.removeChild(textarea);
             window.removeEventListener('click', handleOutsideClick);
             textNode.show();
-            nodeLayer.draw();
+            Node.layer.draw();
           }
 
           function setTextareaWidth(newWidth) {
@@ -689,7 +690,7 @@
 
           newEdge.points([newEdgeSource.x(), newEdgeSource.y(), mouseX, mouseY]);
         };
-      }, nodeLayer);
+      }, Node.layer);
 
       var newEdge,
           newEdgeSource;
@@ -706,7 +707,7 @@
         visible: false
       });
 
-      nodeLayer.add(selectionTransformer);
+      Node.layer.add(selectionTransformer);
 
       stage.on("mousemove", function(e) {
         // Update mouse position
@@ -750,7 +751,7 @@
           }
         }
 
-        edgeLayer.batchDraw();
+        Edge.layer.batchDraw();
 
         document.getElementById('text').textContent = touchedObject.id();
       });
@@ -804,7 +805,7 @@
             strokeWidth: 4
           });
 
-          edgeLayer.add(newEdge);
+          Edge.layer.add(newEdge);
           newEdge.moveToBottom();
 
           newEdgeAnimation.start();
@@ -829,7 +830,7 @@
             newEdge.destroy();
           }
 
-          edgeLayer.batchDraw();
+          Edge.layer.batchDraw();
         }
       });
 
