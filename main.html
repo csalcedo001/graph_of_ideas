@@ -29,7 +29,7 @@
         draggable: true
       });
 
-      // Let stage capture key events
+      // Let stage capture keyboard events
       var container = stage.container();
       container.tabIndex = 1;
       container.focus();
@@ -49,6 +49,13 @@
       // Objects that map ids of nodes and edges to their objects
       var nodes = {};
       var edges = [];
+
+      class Graph {
+        constructor() {
+          this.nodes = {};
+          this.edges = [];
+        }
+      };
 
       class Node extends Konva.Group {
         constructor(obj) {
@@ -194,6 +201,7 @@
 
           super.destroy();
         }
+        // TODO: disconnect(edge)
       };
 
 
@@ -286,11 +294,13 @@
 
           super.destroy();
         }
+        // TODO: points(points) overloading
       };
 
-      // Mapping from node id's in serve to assigned id's in session
+      // Mapping from node id's in server to assigned id's in session
       var nodeMapping = {};
 
+      // TODO: Create Loader class get(graph), post(graph)
       async function getGraph() {
         /**
           Get graph nodes and edges.
