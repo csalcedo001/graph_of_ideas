@@ -557,6 +557,13 @@
 
       // Mouse position
       var mouseX, mouseY;
+      function updateMousePosition() {
+        var position = stage.getPointerPosition();
+        var scale = stage.scale();
+
+        mouseX = (position.x - stage.x()) / scale.x ;
+        mouseY = (position.y - stage.y()) / scale.y ;
+      }
 
       // Create animation that sets arrow position to mouse position
       var newEdgeAnimation = new Konva.Animation(function (frame) {
@@ -662,6 +669,8 @@
       });
 
       stage.on("dblclick", function(e) {
+        updateMousePosition();
+
         // Double click stage: Create node
         if (touchedObject.id() == "stage") {
           var position = stage.getPointerPosition();
@@ -673,7 +682,6 @@
           });
 
           updateTouchedObject(node);
-        document.getElementById('text').textContent = touchedObject.id();
 
           Node.layer.batchDraw();
         }
@@ -820,10 +828,7 @@
 
       stage.on("mousemove", function(e) {
         // Update mouse position
-        var position = stage.getPointerPosition();
-        var scale = stage.scale();
-        mouseX = (position.x - stage.x()) / scale.x ;
-        mouseY = (position.y - stage.y()) / scale.y ;
+        updateMousePosition();
 
         // Set previous target opacity to 0 if its an edge and its not selected
         if (touchedObject.id()[0] == "e" && touchedObject != selectedObject) {
@@ -834,7 +839,7 @@
 
         Edge.layer.batchDraw();
 
-        // document.getElementById('text').textContent = touchedObject.id();
+        document.getElementById('text').textContent = touchedObject.id();
       });
 
       stage.on("mousedown", function(e) {
