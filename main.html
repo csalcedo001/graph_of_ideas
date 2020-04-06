@@ -901,7 +901,7 @@
           newEdgeSource.draggable(true);
 
           // Arrow dragging released over node: Create edge
-          if (!isNaN(touchedObject.id()[0])) {
+          if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
             graph.addEdge({
               source: newEdgeSource,
               target: touchedObject,
