@@ -530,7 +530,7 @@
             edges -- List of lists, pirs of source and target id's respectively.
         **/
 
-        let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/save", {
+        let response = await fetch("https://www.wolframcloud.com/obj/cesars/graphofideas/api/v1/graph", {
           method: 'POST',
           body: JSON.stringify(data)
         })
@@ -558,6 +558,10 @@
       // Mouse position
       var mouseX, mouseY;
       function updateMousePosition() {
+        /**
+          Update mouseX and mouseY.
+        **/
+
         var position = stage.getPointerPosition();
         var scale = stage.scale();
 
@@ -585,9 +589,11 @@
       // Object currently under the mouse
       var touchedObject = stage;
       function updateTouchedObject(eventTarget) {
-        // var parent = eventTarget.getParent();
+        /**
+          Update touchedObject.
+        **/
 
-        // If transformer children, circle or text objects are touched
+        // If transformer children objects, circle or text objects are touched
         if (eventTarget.id() == "" ||
             eventTarget.id()[0] == "c" ||
             eventTarget.id()[0] == "t")
