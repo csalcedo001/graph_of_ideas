@@ -75,6 +75,14 @@
             node -- Node to be removed.
           **/
 
+          node.edges_.forEach(edge => {
+            var index = this.edges_.indexOf(edge);
+
+            if (index > -1) {
+              delete this.edges_.splice(index, 1);
+            }
+          });
+
           delete this.nodes_[node.id()];
 
           node.destroy();
