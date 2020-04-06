@@ -16,7 +16,9 @@
 
   <body>
     <p id="text"></p>
-    <div id="container"></div>
+    <div id="stage-parent">
+      <div id="container"></div>
+    </div>
     <script>
       var width = window.innerWidth;
       var height = window.innerHeight;
@@ -966,6 +968,21 @@
         stage.position(newPos);
         stage.batchDraw();
       });
+
+      // Modified code taken from Konva documentation:
+      // https://konvajs.org/docs/sandbox/Responsive_Canvas.html
+      function fitStageIntoParentContainer() {
+        var stageContainer = document.querySelector('#stage-parent');
+
+        // Set width and height of stage to container
+        stage.width(stageContainer.offsetWidth);
+        stage.height(stageContainer.offsetHeight);
+        stage.draw();
+      }
+
+      fitStageIntoParentContainer();
+      // adapt the stage on any window resize
+      window.addEventListener('resize', fitStageIntoParentContainer);
     </script>
   </body>
 </html>
