@@ -555,6 +555,73 @@
 
       getGraph();
 
+      // Mouse position
+      var mouseX, mouseY;
+
+      // Create animation that sets arrow position to mouse position
+      var newEdgeAnimation = new Konva.Animation(function (frame) {
+        // If mouse is over a node that is not the source node
+        if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
+          // Assign arrow head position to node border
+
+          newEdge.points(Edge.arrowPoints(newEdgeSource, touchedObject));
+        } else {
+          // Assign arrow head position to mouse
+
+          newEdge.points([newEdgeSource.x(), newEdgeSource.y(), mouseX, mouseY]);
+        };
+      }, Node.layer);
+
+      var newEdge,
+          newEdgeSource;
+
+      // Object currently under the mouse
+      var touchedObject = stage;
+      function updateTouchedObject(eventTarget) {
+        // var parent = eventTarget.getParent();
+
+        // If transformer children, circle or text objects are touched
+        if (eventTarget.id() == "" ||
+            eventTarget.id()[0] == "c" ||
+            eventTarget.id()[0] == "t")
+        {
+          eventTarget = eventTarget.getParent();
+        }
+
+        if (!isNaN(eventTarget.id()[0])) {
+          // Node
+          touchedObject = eventTarget;
+        }
+        else if (eventTarget.id()[0] == "T") {
+          // Transformer
+          touchedObject = eventTarget.node();
+        }
+        else if (eventTarget.id()[0] == "e") {
+          // Edge
+          touchedObject = eventTarget;
+
+          if (touchedObject != selectedObject) {
+            touchedObject.opacity(0.2);
+          }
+        }
+        else {
+          touchedObject = stage;
+        }
+
+        document.getElementById('text').textContent = touchedObject.id();
+      }
+
+      // Object clicked
+      var selectedObject = stage;
+
+      // Transformer of selected nodes
+      var selectionTransformer = new Konva.Transformer({
+        id: "Transformer",
+        visible: false
+      });
+
+      Node.layer.add(selectionTransformer);
+
 
       container.addEventListener("keydown", function(e) {
         // Ctrl + S: Save graph
@@ -599,11 +666,14 @@
         if (touchedObject.id() == "stage") {
           var position = stage.getPointerPosition();
 
-          graph.addNode({
+          var node = graph.addNode({
             x: mouseX + stage.position().x,
             y: mouseY + stage.position().y,
             text: ""
           });
+
+          updateTouchedObject(node);
+        document.getElementById('text').textContent = touchedObject.id();
 
           Node.layer.batchDraw();
         }
@@ -748,41 +818,6 @@
         }
       });
 
-
-      // Mouse position
-      var mouseX, mouseY;
-
-      // Create animation that sets arrow position to mouse position
-      var newEdgeAnimation = new Konva.Animation(function (frame) {
-        // If mouse is over a node that is not the source node
-        if (!isNaN(touchedObject.id()[0]) && touchedObject != newEdgeSource) {
-          // Assign arrow head position to node border
-
-          newEdge.points(Edge.arrowPoints(newEdgeSource, touchedObject));
-        } else {
-          // Assign arrow head position to mouse
-
-          newEdge.points([newEdgeSource.x(), newEdgeSource.y(), mouseX, mouseY]);
-        };
-      }, Node.layer);
-
-      var newEdge,
-          newEdgeSource;
-
-      // Object currently under the mouse
-      var touchedObject = stage;
-
-      // Object clicked
-      var selectedObject = stage;
-
-      // Transformer of selected nodes
-      var selectionTransformer = new Konva.Transformer({
-        id: "Transformer",
-        visible: false
-      });
-
-      Node.layer.add(selectionTransformer);
-
       stage.on("mousemove", function(e) {
         // Update mouse position
         var position = stage.getPointerPosition();
@@ -795,39 +830,11 @@
           touchedObject.opacity(0);
         }
 
-        var parent = e.target.getParent();
-
-        if (parent == undefined) {
-          // Only the stage lacks a parent
-          touchedObject = stage;
-        }
-        else {
-          var id = parent.id()[0];
-
-          if (!isNaN(id)) {
-            // Node
-            touchedObject = parent;
-          }
-          else if (id == "T") {
-            // Node transformer
-            touchedObject = parent.node();
-          }
-          else if (e.target.id()[0] == "e") {
-            // Edge
-            touchedObject = e.target;
-
-            if (touchedObject != selectedObject) {
-              touchedObject.opacity(0.2);
-            }
-          }
-          else {
-            touchedObject = stage;
-          }
-        }
+        updateTouchedObject(e.target);
 
         Edge.layer.batchDraw();
 
-        document.getElementById('text').textContent = touchedObject.id();
+        // document.getElementById('text').textContent = touchedObject.id();
       });
 
       stage.on("mousedown", function(e) {
