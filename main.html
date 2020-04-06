@@ -684,6 +684,8 @@
           var node = graph.addNode({
             x: mouseX + stage.position().x,
             y: mouseY + stage.position().y,
+            scaleX: 1 / stage.scaleX(),
+            scaleY: 1 / stage.scaleY(),
             text: ""
           });
 
