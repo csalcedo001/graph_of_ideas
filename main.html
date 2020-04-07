@@ -510,14 +510,22 @@
           var diffX = maxX - minX + offset,
               diffY = maxY - minY + offset;
 
-          var scale = stage.height() / stage.width() < diffY / diffX
-                      ? stage.height() / diffY
-                      : stage.width() / diffX;
+          if (stage.height() / stage.width() < diffY / diffX) {
+            scale = stage.height() / diffY;
 
-          stage.position({
-            x: (offset / 2 - minX) * scale,
-            y: (offset / 2 - minY) * scale
-          });
+            stage.position({
+              x: (stage.width() - ((minX + maxX) * scale)) / 2,
+              y: (offset / 2 - minY) * scale
+            });
+          }
+          else {
+            scale = stage.width() / diffX;
+
+            stage.position({
+              x: (offset / 2 - minX) * scale,
+              y: (stage.height() - ((minY + maxY) * scale)) / 2
+            });
+          }
 
           stage.scale({
             x: scale,
