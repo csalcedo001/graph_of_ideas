@@ -1,6 +1,6 @@
 # Graf
 
-[Graf](https://www.wolframcloud.com/obj/cesars/graphofideas/main) is an interactive graph manipulation interface designed to let users organize information in an intuitive way. (This demo)[https://www.wolframcloud.com/obj/cesars/graphofideas/main] implements its basic functionalities.
+[Graf](https://www.wolframcloud.com/obj/cesars/graphofideas/main) is an interactive graph manipulation interface designed to let users organize information in an intuitive way. [This demo](https://www.wolframcloud.com/obj/cesars/graphofideas/main) implements its basic functionalities.
 
 ## Usage
 
