@@ -489,17 +489,17 @@
 
             nodeMapping[nodeStruct.id] = node.id();
 
-            if (nodeStruct.x > maxX) {
-              maxX = nodeStruct.x;
+            if (nodeStruct.x + node.radius() * nodeStruct.scaleX > maxX) {
+              maxX = nodeStruct.x + node.radius() * nodeStruct.scaleX;
             }
-            if (nodeStruct.y > maxY) {
-              maxY = nodeStruct.y;
+            if (nodeStruct.y + node.radius() * nodeStruct.scaleY > maxY) {
+              maxY = nodeStruct.y + node.radius() * nodeStruct.scaleY;
             }
-            if (nodeStruct.x < minX) {
-              minX = nodeStruct.x;
+            if (nodeStruct.x - node.radius() * nodeStruct.scaleX < minX) {
+              minX = nodeStruct.x - node.radius() * nodeStruct.scaleX;
             }
-            if (nodeStruct.y < minY) {
-              minY = nodeStruct.y;
+            if (nodeStruct.y - node.radius() * nodeStruct.scaleY < minY) {
+              minY = nodeStruct.y - node.radius() * nodeStruct.scaleY;
             }
           });
 
