@@ -699,7 +699,7 @@
 
       stage.on("dblclick", function(e) {
         // Double click stage: Create node
-        if (touchedObject.id() == "stage") {
+        if (touchedObject.id() == "stage" && previousSelectedObject.id() == "stage") {
           var position = stage.getPointerPosition();
 
           var node = graph.addNode({
